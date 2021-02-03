@@ -1,4 +1,4 @@
-//Torsten's Nixi setup
+////Torsten's Nixi setup
 //                            USER DEFINED SETTINGS
 //   Set driver type, fonts to be loaded, pins used and SPI control method etc
 //
@@ -309,8 +309,8 @@ extern int tft_ActiveCS;
 // #define SPI_FREQUENCY   5000000
 // #define SPI_FREQUENCY  10000000
 // #define SPI_FREQUENCY  20000000
-// #define SPI_FREQUENCY  27000000
- #define SPI_FREQUENCY  40000000
+ #define SPI_FREQUENCY  27000000
+// #define SPI_FREQUENCY  40000000
 // #define SPI_FREQUENCY  55000000 // STM32 SPI1 only (SPI2 maximum is 27MHz)
 // #define SPI_FREQUENCY  80000000
 
