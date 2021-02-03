@@ -14,7 +14,11 @@
 #include "tNixi_Digit.h"
 
 
-#include "../../GlobalSettings_privat.h"
+#include "o:\GlobalSettings_privat.h"
+/**** GlobalSettings_private.h ******
+#define WIFI_SSID   <your WiFi SSID>
+#define WIFI_PASSWORD <your WiFi password>
+*/
 
 //define CS for displays
 #define TFT_CS_Digit_0  5   //seconds 1
