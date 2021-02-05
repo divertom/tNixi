@@ -18,6 +18,7 @@ bool tNixi_Digit::Init(int xThisDigitCS, tNixi_Clock_Config *xNixiClockConfig, i
     DigitCS = xThisDigitCS;
     NixiClockConfig = xNixiClockConfig;
     DigitMode = xDigitMode;     //Set what this digit will show 
+    DigitData.TimeDigit = -1;   //just setting some number that will not be show
 
     //Initialize TFT display
     *(NixiClockConfig->ActiveTFT) = DigitCS;  //set this digit as the active TFT
@@ -191,8 +192,15 @@ void tNixi_Digit::DrawNumber(int Number)
 //Draw the digit number as bitmap. Used for single diget on display.
 void tNixi_Digit::DrawNumberPicture(int Number)
 {
-    String FileName = NixiPictureFileName + Number + ".jpg";
-    drawJpeg(FileName.c_str(), 0 , 0); 
+    //check if the number is different then before. Drawing stuff takes a lot of time so we try to reduce this
+    if (DigitData.TimeDigit != Number)
+    {
+        //new number to display
+        String FileName = NixiPictureFileName + Number + ".jpg";
+        drawJpeg(FileName.c_str(), 0 , 0); 
+
+        DigitData.TimeDigit = Number;   //set new number that was just drawn
+    }
 }
 
 //Draw the digit number as Text. Used for single diget on display.
