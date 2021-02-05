@@ -175,11 +175,13 @@ void setup()
 void loop()
 {
   blSetBrightness();
+  ClockConfig.CurrentTime = now();
+
   Digit0.Refresh();
   Digit1.Refresh();
   Digit2.Refresh();
 
-  delay(200);
+  delay(100);
  
 }
 //====================================================================================

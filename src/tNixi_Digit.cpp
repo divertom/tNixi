@@ -216,10 +216,8 @@ void tNixi_Digit::DrawNumberText(int Number)
 // Time:          YYYY MM DD W HH MM SS 
 int tNixi_Digit::GetTimeDigit(int TimeIndex)
 {
-    time_t CurrentTime = now();
     TimeElements timeElements;
-    breakTime(CurrentTime,timeElements);
-
+    breakTime(NixiClockConfig->CurrentTime,timeElements);
     int DigitValue = 0;
 
     switch (TimeIndex) 

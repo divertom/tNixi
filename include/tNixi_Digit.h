@@ -61,12 +61,13 @@ struct tNixi_Clock_Config
     int TimeFormat = TNIXI_TIME_FORMAT_24;
     int DateFormat = TNIXI_DATE_FORMAT_US;
     String WiFiSSID ="";    // some screen will show the current SSID
-    
+    time_t CurrentTime;     // snapshot of the time that wil be displayed. This needs to be refreshed for each new time that is displayed.
 };
 
 union tNixi_Digit_Data
 {
     int TimeDigit;  //any of the time and date digits 
+
     char Stock[MIC_SIZE + 1];   //Stock symbol 
     char CryptoCurrency[CCS_SIZE+ 1]; //Crypro Currency Symbol
 };
