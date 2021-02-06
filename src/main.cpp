@@ -7,20 +7,22 @@
   #include "SPIFFS.h" // ESP32 only
 #endif
 
-#include "JPEG_functions.h"
-#include "SPIFFS_functions.h"
+//#include <WiFi.h>
+//#include <WiFiUdp.h>
 #include <JPEGDecoder.h>
 #include <TFT_eSPI.h>    
+#include <RTClib.h>
 
+#include "JPEG_functions.h"
+#include "SPIFFS_functions.h"
 #include "tNixi_Digit.h"
-#include "RTClib.h"
-
+#include "tNixi_WiFi_functions.h"
 
 #include "o:\GlobalSettings_privat.h"
-/**** GlobalSettings_private.h ******
-#define WIFI_SSID   <your WiFi SSID>
-#define WIFI_PASSWORD <your WiFi password>
-*/
+  /**** GlobalSettings_private.h ******
+  #define WIFI_SSID   <your WiFi SSID>
+  #define WIFI_PASSWORD <your WiFi password>
+  */
 
 //define CS for displays
 #define TFT_CS_Digit_0  5   //seconds 1
@@ -117,9 +119,23 @@ tNixi_Digit Digit2;
 //====================================================================================
 RTC_DS3231 RTC;
 
+uint32_t lastRTC_NTPSync = 0;
+#define RTC_NTP_SYNC_INTERVAL 6 * 3600  //sync RTC from NTP every 6h
+#define RTC_SYSTIM_SYNC_INTERVAL time_t(5)  //after how many seconds the system time is synced with the RTC time
+
 time_t getRTC()
 {
   return RTC.now().unixtime();
+}
+
+//Check if RTC shoudl be synced with NTP
+bool RTC_NTPSyncNeeded()
+{
+  if((RTC.now().unixtime() - lastRTC_NTPSync) > RTC_NTP_SYNC_INTERVAL)
+  {
+    return true;
+  } 
+  return false;
 }
 
 //====================================================================================
@@ -140,13 +156,10 @@ void setup()
   //setup time 
   if (!RTC.begin()) Serial.println("Couldn't find RTC");
 
-  if (RTC.lostPower())
-  {
-      //do stuff hear to set new time
-  }
-
-  //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //last resort to set time to something 
+  //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //just used once to init the RTC 
+  RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC settign via NTP
   
+  setSyncInterval(RTC_SYSTIM_SYNC_INTERVAL);
   setSyncProvider(getRTC);
   if(timeStatus()!= timeSet) 
      Serial.println("Unable to sync with the RTC");
@@ -189,6 +202,7 @@ void setup()
   ClockConfig.TimeFormat = TNIXI_TIME_FORMAT_24;
   ClockConfig.DateFormat = TNIXI_DATE_FORMAT_WORLD;
   ClockConfig.WiFiSSID = WIFI_SSID; //SSID come from GlobalSettings_privat.h
+  ClockConfig.WiFiPassword = WIFI_PASSWORD; //WiFI Password comes from GlobalSettings_privat.h
 
   //create digits
   Digit0.Init(TFT_CS_Digit_0, &ClockConfig,TNIXI_MODE_SECOND_1);
@@ -207,6 +221,10 @@ void setup()
   ledcSetup(TFT_BL_CHANNEL, TFT_BL_FREQ, TFT_BL_RERSOLUTION);
   ledcAttachPin(TFT_BL_PIN, TFT_BL_CHANNEL);
   ledcWrite(TFT_BL_CHANNEL, TFT_BL_INITIAL_LEVEL); // set the brightness of the LED
+
+  //WiFi Setup - we will not wait here for WiFi to connect
+  //WiFi.begin(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
+  WiFiInit(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
 }
 
 //====================================================================================
@@ -214,9 +232,23 @@ void setup()
 //====================================================================================
 void loop()
 {
-  blSetBrightness();
-  ClockConfig.CurrentTime = now();
+  blSetBrightness();  //adjust the TFT backlight
+  
+  //check WiFi connectivity
+  if(WiFi.isConnected()) ClockConfig.WiFiConnected = true;
+  else ClockConfig.WiFiConnected = false;
+  
+  //sync RTC ... only if it's time to do this or RTC lost power ... and only if there is WiFi
+  if (RTC_NTPSyncNeeded() && ClockConfig.WiFiConnected) 
+  //if ((RTC_NTPSyncNeeded() || RTC.lostPower()) && ClockConfig.WiFiConnected)
+  {
+    Serial.println("Adjust RTC with "); 
+    RTC.adjust(DateTime(GetNTPTime()));
+    lastRTC_NTPSync = RTC.now().unixtime();
+  }
+  
 
+  ClockConfig.CurrentTime = now();  //get the current time and date to be displayed
   Digit0.Refresh();
   Digit1.Refresh();
   Digit2.Refresh();
