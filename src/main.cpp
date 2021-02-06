@@ -10,8 +10,10 @@
 #include "JPEG_functions.h"
 #include "SPIFFS_functions.h"
 #include <JPEGDecoder.h>
-#include <TFT_eSPI.h>      
+#include <TFT_eSPI.h>    
+
 #include "tNixi_Digit.h"
+#include "RTClib.h"
 
 
 #include "o:\GlobalSettings_privat.h"
@@ -111,6 +113,16 @@ tNixi_Digit Digit1;
 tNixi_Digit Digit2;
 
 //====================================================================================
+//                                    Time Stuff
+//====================================================================================
+RTC_DS3231 RTC;
+
+time_t getRTC()
+{
+  return RTC.now().unixtime();
+}
+
+//====================================================================================
 //                                    Setup
 //====================================================================================
 void setup()
@@ -125,6 +137,34 @@ void setup()
   Serial.println("SPIFFS Initialized");
   listFiles(); // Lists all files that ara availabel in the SPIFFS
 
+  //setup time 
+  if (!RTC.begin()) Serial.println("Couldn't find RTC");
+
+  if (RTC.lostPower())
+  {
+      //do stuff hear to set new time
+  }
+
+  //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //last resort to set time to something 
+  
+  setSyncProvider(getRTC);
+  if(timeStatus()!= timeSet) 
+     Serial.println("Unable to sync with the RTC");
+  else
+     Serial.println("RTC has set the system time");
+
+  //Just for testing 
+    Serial.print(hour());Serial.print(":");
+    Serial.print(minute());Serial.print(":");
+    Serial.print(second());
+    Serial.print(" ");
+    Serial.print(day());
+    Serial.print(" ");
+    Serial.print(month());
+    Serial.print(" ");
+    Serial.print(year()); 
+    Serial.println(); 
+ 
   //**** Initialize digits
   // I/O pin setup 
   pinMode(TFT_CS_Digit_0, OUTPUT); 
