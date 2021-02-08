@@ -23,7 +23,6 @@ int TimeOffsetGMT = (timeZone * 3600); //default time zone
 unsigned int localPort = 8888;  // local port to listen for UDP packets
 
 WiFiUDP ntpUDP;
-//NTPClient timeClient(ntpUDP);
 NTPClient timeClient(ntpUDP, ntpServerName, TimeOffsetGMT, NTP_UPDATE_INTERVAL);
 
 static void onWiFiEvent_GotIP(WiFiEvent_t event)

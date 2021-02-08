@@ -131,11 +131,20 @@ time_t getRTC()
 //Check if RTC shoudl be synced with NTP
 bool RTC_NTPSyncNeeded()
 {
-  if((RTC.now().unixtime() - lastRTC_NTPSync) > RTC_NTP_SYNC_INTERVAL)
-  {
-    return true;
-  } 
+  if((RTC.now().unixtime() - lastRTC_NTPSync) > RTC_NTP_SYNC_INTERVAL) return true;
   return false;
+}
+
+//Sybc the RTC time wiht the NTP time if needed
+void SyncRTC_NTP(void)
+{
+  //sync RTC ... only if it's time to do this or RTC lost power ... and only if there is WiFi
+  if ((RTC_NTPSyncNeeded() || RTC.lostPower()) && ClockConfig.WiFiConnected)
+  {
+    Serial.print("Adjust RTC with ");
+    RTC.adjust(DateTime(GetNTPTime()));
+    lastRTC_NTPSync = RTC.now().unixtime();
+  }
 }
 
 //====================================================================================
@@ -157,7 +166,7 @@ void setup()
   if (!RTC.begin()) Serial.println("Couldn't find RTC");
 
   //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //just used once to init the RTC 
-  RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC settign via NTP
+  RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC setting via NTP
   
   setSyncInterval(RTC_SYSTIM_SYNC_INTERVAL);
   setSyncProvider(getRTC);
@@ -223,7 +232,6 @@ void setup()
   ledcWrite(TFT_BL_CHANNEL, TFT_BL_INITIAL_LEVEL); // set the brightness of the LED
 
   //WiFi Setup - we will not wait here for WiFi to connect
-  //WiFi.begin(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
   WiFiInit(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
 }
 
@@ -232,28 +240,18 @@ void setup()
 //====================================================================================
 void loop()
 {
+  //************ Do some system housekeeping **********************
   blSetBrightness();  //adjust the TFT backlight
-  
-  //check WiFi connectivity
-  if(WiFi.isConnected()) ClockConfig.WiFiConnected = true;
-  else ClockConfig.WiFiConnected = false;
-  
-  //sync RTC ... only if it's time to do this or RTC lost power ... and only if there is WiFi
-  if (RTC_NTPSyncNeeded() && ClockConfig.WiFiConnected) 
-  //if ((RTC_NTPSyncNeeded() || RTC.lostPower()) && ClockConfig.WiFiConnected)
-  {
-    Serial.println("Adjust RTC with "); 
-    RTC.adjust(DateTime(GetNTPTime()));
-    lastRTC_NTPSync = RTC.now().unixtime();
-  }
-  
+  SyncRTC_NTP();  //sync RTC time with NTP time if needed 
 
+  //************ Prepare the display data *************************
+  ClockConfig.WiFiConnected = WiFi.isConnected();  //set current WiFi conenction status
   ClockConfig.CurrentTime = now();  //get the current time and date to be displayed
+
+  //************ The last thing to do, refresh all displays *******
   Digit0.Refresh();
   Digit1.Refresh();
   Digit2.Refresh();
-
-  delay(100);
  
 }
 //====================================================================================
