@@ -214,15 +214,18 @@ void setup()
   ClockConfig.WiFiPassword = WIFI_PASSWORD; //WiFI Password comes from GlobalSettings_privat.h
 
   //create digits
-  Digit0.Init(TFT_CS_Digit_0, &ClockConfig,TNIXI_MODE_SECOND_1);
+  //Digit0.Init(TFT_CS_Digit_0, &ClockConfig,TNIXI_MODE_SECOND_1);
+  Digit0.Init(TFT_CS_Digit_0, &ClockConfig,TNIXI_MODE_MINUTE_1);
   Digit0.InitGraphicMode(NIXI_TYPE);
   Digit0.GraphicMode();
 
-  Digit1.Init(TFT_CS_Digit_1, &ClockConfig,TNIXI_MODE_SECOND_10);
+  //Digit1.Init(TFT_CS_Digit_1, &ClockConfig,TNIXI_MODE_SECOND_10);
+  Digit1.Init(TFT_CS_Digit_1, &ClockConfig,TNIXI_MODE_MINUTE_10);
   Digit1.InitGraphicMode(NIXI_TYPE);
   Digit1.GraphicMode();
 
-  Digit2.Init(TFT_CS_Digit_2, &ClockConfig,TNIXI_MODE_MINUTE_1);
+  //Digit2.Init(TFT_CS_Digit_2, &ClockConfig,TNIXI_MODE_MINUTE_1);
+  Digit2.Init(TFT_CS_Digit_2, &ClockConfig,TNIXI_MODE_HOUR_1);
   Digit2.InitGraphicMode(NIXI_TYPE);
   Digit2.GraphicMode();
 
