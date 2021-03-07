@@ -6,6 +6,37 @@
 #include "JPEG_functions.h"
 #include <JPEGDecoder.h>
 
+//***************************************************************
+//****** Tube functions *****************************************
+//***************************************************************
+
+tNixi_Tube::tNixi_Tube()
+{
+
+}
+
+void tNixi_Tube::Init(int xThisDigitCS, tNixi_Clock_Config *xNixiClockConfig)
+{
+    ChipSelect = xThisDigitCS;
+    ClockConfig = xNixiClockConfig;
+
+    *(ClockConfig->ActiveTFT) = ChipSelect;  //set this digit as the active TFT
+    ClockConfig->TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
+    ClockConfig->TFT->fillScreen(TFT_BLACK);
+}
+
+void tNixi_Tube::SetDigit(tNixi_Digit *Digit)
+{
+    currentDigit = Digit;
+}
+
+void tNixi_Tube::Refresh()
+{
+    *(ClockConfig->ActiveTFT) = ChipSelect;  //set this digit as the active TFT
+    currentDigit->Refresh();
+}
+
+
 //Initializing digit without defined  mode
 tNixi_Digit::tNixi_Digit()
 {
@@ -13,17 +44,16 @@ tNixi_Digit::tNixi_Digit()
 }
 
 //Initializing digit wiht defiend mode, e.g. hour_10
-bool tNixi_Digit::Init(int xThisDigitCS, tNixi_Clock_Config *xNixiClockConfig, int xDigitMode)
+bool tNixi_Digit::Init(tNixi_Clock_Config *xNixiClockConfig, int xDigitMode)
 {
-    DigitCS = xThisDigitCS;
     NixiClockConfig = xNixiClockConfig;
     DigitMode = xDigitMode;     //Set what this digit will show 
     DigitData.TimeDigit = -1;   //just setting some number that will not be show
 
-    //Initialize TFT display
-    *(NixiClockConfig->ActiveTFT) = DigitCS;  //set this digit as the active TFT
-    NixiClockConfig->TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
-    NixiClockConfig->TFT->fillScreen(TFT_BLACK);
+    //Initialize TFT display --- old code remove 
+    //*(NixiClockConfig->ActiveTFT) = DigitCS;  //set this digit as the active TFT
+    //NixiClockConfig->TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
+    //NixiClockConfig->TFT->fillScreen(TFT_BLACK);
 
     DigitIsIntitialized = true;
     
@@ -90,7 +120,7 @@ bool tNixi_Digit::Refresh(bool xForce)
 {
     IS_DIGIT_INITIALIZED
     
-    *(NixiClockConfig->ActiveTFT) = DigitCS;  //set this digit as the active TFT
+    //*(NixiClockConfig->ActiveTFT) = DigitCS;  //set this digit as the active TFT
     //Serial.print("Active Display: "); Serial.println(*(NixiClockConfig->ActiveTFT));
         
     switch (DigitMode)
@@ -133,7 +163,7 @@ void tNixi_Digit::ShowScreen_Boot()
     NixiClockConfig->TFT->setTextColor(TFT_WHITE);  
     NixiClockConfig->TFT->setTextSize(2);
 
-    NixiClockConfig->TFT->print("Chip Select: "); NixiClockConfig->TFT->println(DigitCS);
+    //NixiClockConfig->TFT->print("Chip Select: "); NixiClockConfig->TFT->println(DigitCS);
     NixiClockConfig->TFT->print("SSID: "); NixiClockConfig->TFT->println(NixiClockConfig->WiFiSSID);
 }
 

@@ -28,9 +28,9 @@
 #define TFT_CS_Digit_0  5   //seconds 1
 #define TFT_CS_Digit_1  17  //seconds 10
 #define TFT_CS_Digit_2  19  //minutes 1
-//#define TFT_CS_Digit_3  19  //minutes 10
-//#define TFT_CS_Digit_4  19  //hours 1
-//#define TFT_CS_Digit_5  19  //hours 10
+#define TFT_CS_Digit_3  26  //minutes 10
+#define TFT_CS_Digit_4  36  //hours 1
+#define TFT_CS_Digit_5  14  //hours 10
 
 
 #define LED_ORIENTATION 2 // 0 & 2 Portrait. 1 & 3 landscape
@@ -38,6 +38,8 @@
 #define NIXI_TYPE "/NixiA_"
 //#define NIXI_TYPE "/NixiB_"
 //#define NIXI_TYPE "/NixiC_"
+
+#define BOOT_SCREEN_TIMEOUT 10 //show boot screen for 10s
 
 TFT_eSPI tft = TFT_eSPI(); 
 
@@ -109,10 +111,24 @@ void blSetBrightness(void)
 //                                    Global Variables
 //====================================================================================
 tNixi_Clock_Config ClockConfig;
+long bootTime = 0;
+bool showBootbootTimeScreen = true;
 
-tNixi_Digit Digit0;
-tNixi_Digit Digit1;
-tNixi_Digit Digit2;
+//Create a tNixi_Tube object for each tube. This should be change to a list of objects
+tNixi_Tube Tube0;
+tNixi_Tube Tube1;
+tNixi_Tube Tube2;
+tNixi_Tube Tube3;
+tNixi_Tube Tube4;
+tNixi_Tube Tube5;
+
+tNixi_Digit DigitSec1;
+tNixi_Digit DigitSec10;
+tNixi_Digit DigitMin1;
+tNixi_Digit DigitMin10;
+tNixi_Digit DigitHour1;
+tNixi_Digit DigitHour10;
+tNixi_Digit DigitBoot;
 
 //====================================================================================
 //                                    Time Stuff
@@ -166,10 +182,10 @@ void setup()
   if (!RTC.begin()) Serial.println("Couldn't find RTC");
 
   //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //just used once to init the RTC 
-  RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC setting via NTP
+  RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC setting via NTP remove in production code
   
   setSyncInterval(RTC_SYSTIM_SYNC_INTERVAL);
-  setSyncProvider(getRTC);
+  //setSyncProvider(getRTC);  //set RTC as time provider
   if(timeStatus()!= timeSet) 
      Serial.println("Unable to sync with the RTC");
   else
@@ -186,24 +202,33 @@ void setup()
     Serial.print(" ");
     Serial.print(year()); 
     Serial.println(); 
- 
+
   //**** Initialize digits
   // I/O pin setup 
   pinMode(TFT_CS_Digit_0, OUTPUT); 
   pinMode(TFT_CS_Digit_1, OUTPUT); 
   pinMode(TFT_CS_Digit_2, OUTPUT); 
+  pinMode(TFT_CS_Digit_3, OUTPUT); 
+  pinMode(TFT_CS_Digit_4, OUTPUT); 
+  pinMode(TFT_CS_Digit_5, OUTPUT);  
 
   //set all CS active (low) to be initialized at the same time
   digitalWrite(TFT_CS_Digit_0, LOW);  
   digitalWrite(TFT_CS_Digit_1, LOW);
   digitalWrite(TFT_CS_Digit_2, LOW);
+  digitalWrite(TFT_CS_Digit_3, LOW);  
+  digitalWrite(TFT_CS_Digit_4, LOW);
+  digitalWrite(TFT_CS_Digit_5, LOW);
 
   tft.begin();
 
   //set all CS inactive (hight) 
   digitalWrite(TFT_CS_Digit_0, HIGH);
-  digitalWrite(TFT_CS_Digit_0, HIGH);
-  digitalWrite(TFT_CS_Digit_0, HIGH);
+  digitalWrite(TFT_CS_Digit_1, HIGH);
+  digitalWrite(TFT_CS_Digit_2, HIGH);
+  digitalWrite(TFT_CS_Digit_3, HIGH);
+  digitalWrite(TFT_CS_Digit_4, HIGH);
+  digitalWrite(TFT_CS_Digit_5, HIGH);
 
   //prep clock configurations
   ClockConfig.ActiveTFT = &tft_ActiveCS;
@@ -213,21 +238,52 @@ void setup()
   ClockConfig.WiFiSSID = WIFI_SSID; //SSID come from GlobalSettings_privat.h
   ClockConfig.WiFiPassword = WIFI_PASSWORD; //WiFI Password comes from GlobalSettings_privat.h
 
-  //create digits
-  //Digit0.Init(TFT_CS_Digit_0, &ClockConfig,TNIXI_MODE_SECOND_1);
-  Digit0.Init(TFT_CS_Digit_0, &ClockConfig,TNIXI_MODE_MINUTE_1);
-  Digit0.InitGraphicMode(NIXI_TYPE);
-  Digit0.GraphicMode();
+  //init Tubes
+  Tube0.Init(TFT_CS_Digit_0, &ClockConfig);
+  Tube1.Init(TFT_CS_Digit_1, &ClockConfig);
+  Tube2.Init(TFT_CS_Digit_2, &ClockConfig);
+  Tube3.Init(TFT_CS_Digit_3, &ClockConfig);
+  Tube4.Init(TFT_CS_Digit_4, &ClockConfig);
+  Tube5.Init(TFT_CS_Digit_5, &ClockConfig);
 
-  //Digit1.Init(TFT_CS_Digit_1, &ClockConfig,TNIXI_MODE_SECOND_10);
-  Digit1.Init(TFT_CS_Digit_1, &ClockConfig,TNIXI_MODE_MINUTE_10);
-  Digit1.InitGraphicMode(NIXI_TYPE);
-  Digit1.GraphicMode();
 
-  //Digit2.Init(TFT_CS_Digit_2, &ClockConfig,TNIXI_MODE_MINUTE_1);
-  Digit2.Init(TFT_CS_Digit_2, &ClockConfig,TNIXI_MODE_HOUR_1);
-  Digit2.InitGraphicMode(NIXI_TYPE);
-  Digit2.GraphicMode();
+  //create digits 
+  DigitSec1.Init(&ClockConfig,TNIXI_MODE_SECOND_1);
+  DigitSec1.InitGraphicMode(NIXI_TYPE);
+  DigitSec1.GraphicMode();
+
+  DigitSec10.Init(&ClockConfig,TNIXI_MODE_SECOND_10);
+  DigitSec10.InitGraphicMode(NIXI_TYPE);
+  DigitSec10.GraphicMode();
+
+  DigitMin1.Init(&ClockConfig,TNIXI_MODE_MINUTE_1);
+  DigitMin1.InitGraphicMode(NIXI_TYPE);
+  DigitMin1.GraphicMode();
+
+  DigitMin10.Init(&ClockConfig,TNIXI_MODE_MINUTE_10);
+  DigitMin10.InitGraphicMode(NIXI_TYPE);
+  DigitMin10.GraphicMode();
+
+  DigitHour1.Init(&ClockConfig,TNIXI_MODE_HOUR_1);
+  DigitHour1.InitGraphicMode(NIXI_TYPE);
+  DigitHour1.GraphicMode();
+
+  DigitHour10.Init(&ClockConfig,TNIXI_MODE_HOUR_10);
+  DigitHour10.InitGraphicMode(NIXI_TYPE);
+  DigitHour10.GraphicMode();
+
+  DigitBoot.Init(&ClockConfig,TNIXI_MODE_BOOT);
+  DigitBoot.InitGraphicMode(NIXI_TYPE);
+  DigitBoot.GraphicMode();
+
+  //set inital tube displayes    
+  Tube0.SetDigit(&DigitBoot); //start with the boot screen
+  showBootbootTimeScreen = true;
+  Tube1.SetDigit(&DigitSec10);
+  Tube2.SetDigit(&DigitMin1);
+  Tube3.SetDigit(&DigitMin10);
+  Tube4.SetDigit(&DigitHour1);
+  Tube5.SetDigit(&DigitHour10);
 
   //TFT backligth setup
   ledcSetup(TFT_BL_CHANNEL, TFT_BL_FREQ, TFT_BL_RERSOLUTION);
@@ -236,6 +292,12 @@ void setup()
 
   //WiFi Setup - we will not wait here for WiFi to connect
   WiFiInit(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
+
+  bootTime = now();
+  //Test
+  //tft_ActiveCS = TFT_CS_Digit_5;
+  //tft.setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
+  //tft.fillScreen(TFT_BLACK);
 }
 
 //====================================================================================
@@ -245,17 +307,32 @@ void loop()
 {
   //************ Do some system housekeeping **********************
   blSetBrightness();  //adjust the TFT backlight
-  SyncRTC_NTP();  //sync RTC time with NTP time if needed 
+  //SyncRTC_NTP();  //sync RTC time with NTP time if needed 
 
   //************ Prepare the display data *************************
   ClockConfig.WiFiConnected = WiFi.isConnected();  //set current WiFi conenction status
   ClockConfig.CurrentTime = now();  //get the current time and date to be displayed
 
+  //************ Set what every tube should show **************
+  if (showBootbootTimeScreen)
+  {
+    if ((now() - bootTime) > BOOT_SCREEN_TIMEOUT)
+    {
+        Serial.println ("Switch to time screen");
+        Tube0.SetDigit(&DigitSec1); //replace boot screen with second digit 1 display
+        showBootbootTimeScreen = false;
+    }
+  }
+
+
   //************ The last thing to do, refresh all displays *******
-  Digit0.Refresh();
-  Digit1.Refresh();
-  Digit2.Refresh();
- 
+  Tube0.Refresh();
+  Tube1.Refresh();
+  //Tube2.Refresh();
+  //Tube3.Refresh();
+  //Tube4.Refresh();
+  //Tube5.Refresh();
+  
 }
 //====================================================================================
 

@@ -68,6 +68,23 @@ struct tNixi_Clock_Config
 
 extern tNixi_Clock_Config ClockConfig;
 
+class tNixi_Digit; 
+
+//The calss definds a tube posiution. There will be one instance for each tube
+class tNixi_Tube
+{
+    public:
+        tNixi_Tube();
+        void Init(int xThisDigitCS, tNixi_Clock_Config *xNixiClockConfig);
+        void SetDigit(tNixi_Digit *Digit);
+        void Refresh();
+
+    private:
+        tNixi_Digit *currentDigit;
+        int ChipSelect;
+        tNixi_Clock_Config *ClockConfig;
+
+};
 
 union tNixi_Digit_Data
 {
@@ -82,7 +99,7 @@ class tNixi_Digit
     public:
         tNixi_Digit();
         
-        bool Init(int xThisDigitCS, tNixi_Clock_Config *xNixiClockConfig, int xDigitMode);
+        bool Init(tNixi_Clock_Config *xNixiClockConfig, int xDigitMode);
         bool InitGraphicMode(String xNixiPictureFileName);
         bool InitTextMode(uint8_t xTextFont, uint32_t xTextColor = TNIXI_DEFAULT_COLOR);
         bool TextMode(void);
@@ -93,7 +110,7 @@ class tNixi_Digit
 
     private:
         bool DigitIsIntitialized = false;
-        int DigitCS;    //CS pin for this digit, configured via Init procedure 
+        //int DigitCS;    //CS pin for this digit, configured via Init procedure 
         int DigitMode = TNIXI_MODE_BOOT;
         tNixi_Clock_Config *NixiClockConfig;
         
