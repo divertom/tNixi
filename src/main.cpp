@@ -27,8 +27,8 @@
 //define CS for displays
 #define TFT_CS_Digit_0  5   //seconds 1
 #define TFT_CS_Digit_1  17  //seconds 10
-#define TFT_CS_Digit_2  19  //minutes 1
-#define TFT_CS_Digit_3  26  //minutes 10
+#define TFT_CS_Digit_2  25  //minutes 1
+#define TFT_CS_Digit_3  32  //minutes 10
 #define TFT_CS_Digit_4  36  //hours 1
 #define TFT_CS_Digit_5  14  //hours 10
 
@@ -181,11 +181,14 @@ void setup()
   //setup time 
   if (!RTC.begin()) Serial.println("Couldn't find RTC");
 
-  //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //just used once to init the RTC 
-  RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC setting via NTP remove in production code
-  
+  //RTC testing only
+    //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //just used once to init the RTC 
+      //OR
+    //RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC setting via NTP remove in production code
+  //RTC testing 
+
   setSyncInterval(RTC_SYSTIM_SYNC_INTERVAL);
-  //setSyncProvider(getRTC);  //set RTC as time provider
+  setSyncProvider(getRTC);  //set RTC as time provider
   if(timeStatus()!= timeSet) 
      Serial.println("Unable to sync with the RTC");
   else
@@ -279,11 +282,22 @@ void setup()
   //set inital tube displayes    
   Tube0.SetDigit(&DigitBoot); //start with the boot screen
   showBootbootTimeScreen = true;
+
+/*
   Tube1.SetDigit(&DigitSec10);
   Tube2.SetDigit(&DigitMin1);
   Tube3.SetDigit(&DigitMin10);
   Tube4.SetDigit(&DigitHour1);
   Tube5.SetDigit(&DigitHour10);
+*/
+
+  //Test
+  Tube1.SetDigit(&DigitMin10);
+  Tube2.SetDigit(&DigitHour1);
+  //Tube3.SetDigit(&DigitMin10);
+  //Tube4.SetDigit(&DigitHour1);
+  //Tube5.SetDigit(&DigitHour10);
+  //Test
 
   //TFT backligth setup
   ledcSetup(TFT_BL_CHANNEL, TFT_BL_FREQ, TFT_BL_RERSOLUTION);
@@ -294,10 +308,6 @@ void setup()
   WiFiInit(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
 
   bootTime = now();
-  //Test
-  //tft_ActiveCS = TFT_CS_Digit_5;
-  //tft.setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
-  //tft.fillScreen(TFT_BLACK);
 }
 
 //====================================================================================
@@ -307,7 +317,7 @@ void loop()
 {
   //************ Do some system housekeeping **********************
   blSetBrightness();  //adjust the TFT backlight
-  //SyncRTC_NTP();  //sync RTC time with NTP time if needed 
+  SyncRTC_NTP();  //sync RTC time with NTP time if needed 
 
   //************ Prepare the display data *************************
   ClockConfig.WiFiConnected = WiFi.isConnected();  //set current WiFi conenction status
@@ -319,7 +329,8 @@ void loop()
     if ((now() - bootTime) > BOOT_SCREEN_TIMEOUT)
     {
         Serial.println ("Switch to time screen");
-        Tube0.SetDigit(&DigitSec1); //replace boot screen with second digit 1 display
+        //Tube0.SetDigit(&DigitSec1); //replace boot screen with second digit 1 display
+        Tube0.SetDigit(&DigitMin1); //replace boot screen with second digit 1 display
         showBootbootTimeScreen = false;
     }
   }
@@ -328,7 +339,7 @@ void loop()
   //************ The last thing to do, refresh all displays *******
   Tube0.Refresh();
   Tube1.Refresh();
-  //Tube2.Refresh();
+  Tube2.Refresh();
   //Tube3.Refresh();
   //Tube4.Refresh();
   //Tube5.Refresh();
