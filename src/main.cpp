@@ -7,8 +7,6 @@
   #include "SPIFFS.h" // ESP32 only
 #endif
 
-//#include <WiFi.h>
-//#include <WiFiUdp.h>
 #include <JPEGDecoder.h>
 #include <TFT_eSPI.h>    
 #include <RTClib.h>
@@ -39,7 +37,7 @@
 //#define NIXI_TYPE "/NixiB_"
 //#define NIXI_TYPE "/NixiC_"
 
-#define BOOT_SCREEN_TIMEOUT 3 //show boot screen for 3s
+#define BOOT_SCREEN_TIMEOUT 10 //show boot screen for 10s
 
 TFT_eSPI tft = TFT_eSPI(); 
 
@@ -320,7 +318,17 @@ void loop()
   SyncRTC_NTP();  //sync RTC time with NTP time if needed 
 
   //************ Prepare the display data *************************
-  ClockConfig.WiFiConnected = WiFi.isConnected();  //set current WiFi conenction status
+  if (WiFi.isConnected())
+  {
+    ClockConfig.WiFiConnected = true;  //set current WiFi conenction status
+    ClockConfig.IPAddress = WiFi.localIP().toString();
+  }
+  else 
+  {
+    ClockConfig.WiFiConnected = false;  //set current WiFi conenction status
+    ClockConfig.IPAddress = String("0.0.0.0");
+  }
+
   ClockConfig.CurrentTime = now();  //get the current time and date to be displayed
 
   //************ Set what every tube should show **************
@@ -328,7 +336,6 @@ void loop()
   {
     if ((now() - bootTime) > BOOT_SCREEN_TIMEOUT)
     {
-        Serial.println ("Switch to time screen");
         //Tube0.SetDigit(&DigitSec1); //replace boot screen with second digit 1 display
         Tube0.SetDigit(&DigitMin1); //replace boot screen with second digit 1 display
         showBootbootTimeScreen = false;

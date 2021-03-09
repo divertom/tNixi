@@ -61,7 +61,8 @@ struct tNixi_Clock_Config
     int TimeFormat = TNIXI_TIME_FORMAT_24;
     int DateFormat = TNIXI_DATE_FORMAT_US;
     String WiFiSSID ="";    // some screen will show the current SSID
-    String WiFiPassword = "";   
+    String WiFiPassword = ""; 
+    String IPAddress = "";  
     bool WiFiConnected = false;
     time_t CurrentTime;     // snapshot of the time that wil be displayed. This needs to be refreshed for each new time that is displayed.
 };

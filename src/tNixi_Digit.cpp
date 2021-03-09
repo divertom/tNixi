@@ -1,10 +1,12 @@
 #include "tNixi_Digit.h"
 
 #include <Arduino.h>
+#include <RTClib.h>
 #include <TFT_eSPI.h>
 #include <string>
-#include "JPEG_functions.h"
 #include <JPEGDecoder.h>
+#include "JPEG_functions.h"
+
 
 //***************************************************************
 //****** Tube functions *****************************************
@@ -160,11 +162,26 @@ bool tNixi_Digit::Refresh(bool xForce)
 void tNixi_Digit::ShowScreen_Boot()
 {
     NixiClockConfig->TFT->setCursor(0, 0);
-    NixiClockConfig->TFT->setTextColor(TFT_WHITE);  
+    NixiClockConfig->TFT->setTextColor(TFT_WHITE, TFT_BLACK);
+    NixiClockConfig->TFT->setTextDatum(TR_DATUM);
     NixiClockConfig->TFT->setTextSize(2);
+    int padding = NixiClockConfig->TFT->textWidth("                    ", 2); // get the width of the text in pixels;
+    NixiClockConfig->TFT->setTextPadding(padding);
 
     //NixiClockConfig->TFT->print("Chip Select: "); NixiClockConfig->TFT->println(DigitCS);
     NixiClockConfig->TFT->print("SSID: "); NixiClockConfig->TFT->println(NixiClockConfig->WiFiSSID);
+    NixiClockConfig->TFT->print("IP: ");NixiClockConfig->TFT->println(NixiClockConfig->IPAddress);
+
+    char TimeDateStr[20];
+    DateTime CurrentTime = NixiClockConfig->CurrentTime;
+    sprintf(TimeDateStr, "%02d:%02d:%02d %02d/%02d/%02d",   CurrentTime.hour(), 
+                                                            CurrentTime.minute(), 
+                                                            CurrentTime.second(), 
+                                                            CurrentTime.day(), 
+                                                            CurrentTime.month(), 
+                                                            CurrentTime.year());
+
+    NixiClockConfig->TFT->println(TimeDateStr);
 }
 
 //Show date in numbers only: "12/30" or "30.12"
