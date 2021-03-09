@@ -28,7 +28,7 @@
 #define TFT_CS_Digit_0  5   //seconds 1
 #define TFT_CS_Digit_1  17  //seconds 10
 #define TFT_CS_Digit_2  25  //minutes 1
-#define TFT_CS_Digit_3  32  //minutes 10
+#define TFT_CS_Digit_3  12  //minutes 10
 #define TFT_CS_Digit_4  36  //hours 1
 #define TFT_CS_Digit_5  14  //hours 10
 
@@ -39,7 +39,7 @@
 //#define NIXI_TYPE "/NixiB_"
 //#define NIXI_TYPE "/NixiC_"
 
-#define BOOT_SCREEN_TIMEOUT 10 //show boot screen for 10s
+#define BOOT_SCREEN_TIMEOUT 3 //show boot screen for 3s
 
 TFT_eSPI tft = TFT_eSPI(); 
 
@@ -294,7 +294,7 @@ void setup()
   //Test
   Tube1.SetDigit(&DigitMin10);
   Tube2.SetDigit(&DigitHour1);
-  //Tube3.SetDigit(&DigitMin10);
+  Tube3.SetDigit(&DigitHour10);
   //Tube4.SetDigit(&DigitHour1);
   //Tube5.SetDigit(&DigitHour10);
   //Test
@@ -340,7 +340,7 @@ void loop()
   Tube0.Refresh();
   Tube1.Refresh();
   Tube2.Refresh();
-  //Tube3.Refresh();
+  Tube3.Refresh();
   //Tube4.Refresh();
   //Tube5.Refresh();
   
