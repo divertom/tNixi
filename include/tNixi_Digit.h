@@ -5,6 +5,8 @@
     #include <TFT_eSPI.h>
     #include <string>
 
+#define FW_VERSION String(__DATE__) + String(" ") + String(__TIME__)
+
 #define LED_ORIENTATION 2 // 0 & 2 Portrait. 1 & 3 landscape
 
 #define TNIXI_TIME_FORMAT_24  0 //24 hour time display

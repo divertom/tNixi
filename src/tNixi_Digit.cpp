@@ -162,13 +162,14 @@ bool tNixi_Digit::Refresh(bool xForce)
 void tNixi_Digit::ShowScreen_Boot()
 {
     NixiClockConfig->TFT->setCursor(0, 0);
-    NixiClockConfig->TFT->setTextColor(TFT_WHITE, TFT_BLACK);
+    NixiClockConfig->TFT->setTextColor(TFT_YELLOW, TFT_BLUE);
     NixiClockConfig->TFT->setTextDatum(TR_DATUM);
     NixiClockConfig->TFT->setTextSize(2);
     int padding = NixiClockConfig->TFT->textWidth("                    ", 2); // get the width of the text in pixels;
     NixiClockConfig->TFT->setTextPadding(padding);
 
-    //NixiClockConfig->TFT->print("Chip Select: "); NixiClockConfig->TFT->println(DigitCS);
+    NixiClockConfig->TFT->println(FW_VERSION);
+    NixiClockConfig->TFT->setTextColor(TFT_WHITE, TFT_BLACK);
     NixiClockConfig->TFT->print("SSID: "); NixiClockConfig->TFT->println(NixiClockConfig->WiFiSSID);
     NixiClockConfig->TFT->print("IP: ");NixiClockConfig->TFT->println(NixiClockConfig->IPAddress);
 
