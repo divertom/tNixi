@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#include "tNixi.h"
+
 #define FS_NO_GLOBALS
 #include <FS.h>
 
@@ -10,6 +12,7 @@
 #include <JPEGDecoder.h>
 #include <TFT_eSPI.h>    
 #include <RTClib.h>
+#include <ArduinoOTA.h>
 
 #include "JPEG_functions.h"
 #include "SPIFFS_functions.h"
@@ -21,6 +24,7 @@
   #define WIFI_SSID   <your WiFi SSID>
   #define WIFI_PASSWORD <your WiFi password>
   */
+
 
 //define CS for displays
 #define TFT_CS_Digit_0  5   //seconds 1
@@ -129,81 +133,10 @@ tNixi_Digit DigitHour10;
 tNixi_Digit DigitBoot;
 
 //====================================================================================
-//                                    Time Stuff
+//                                    Display Stuff
 //====================================================================================
-RTC_DS3231 RTC;
-
-uint32_t lastRTC_NTPSync = 0;
-#define RTC_NTP_SYNC_INTERVAL 6 * 3600  //sync RTC from NTP every 6h
-#define RTC_SYSTIM_SYNC_INTERVAL time_t(5)  //after how many seconds the system time is synced with the RTC time
-
-time_t getRTC()
+bool TFTsInit()
 {
-  return RTC.now().unixtime();
-}
-
-//Check if RTC shoudl be synced with NTP
-bool RTC_NTPSyncNeeded()
-{
-  if((RTC.now().unixtime() - lastRTC_NTPSync) > RTC_NTP_SYNC_INTERVAL) return true;
-  return false;
-}
-
-//Sybc the RTC time wiht the NTP time if needed
-void SyncRTC_NTP(void)
-{
-  //sync RTC ... only if it's time to do this or RTC lost power ... and only if there is WiFi
-  if ((RTC_NTPSyncNeeded() || RTC.lostPower()) && ClockConfig.WiFiConnected)
-  {
-    Serial.print("Adjust RTC with ");
-    RTC.adjust(DateTime(GetNTPTime()));
-    lastRTC_NTPSync = RTC.now().unixtime();
-  }
-}
-
-//====================================================================================
-//                                    Setup
-//====================================================================================
-void setup()
-{
-  Serial.begin(115200); 
-  Serial.println("tNixi Clock Project");
-
-  if (!SPIFFS.begin()) {
-      Serial.println("SPIFFS initialisation failed!");
-      while (1) yield(); 
-  }
-  Serial.println("SPIFFS Initialized");
-  listFiles(); // Lists all files that ara availabel in the SPIFFS
-
-  //setup time 
-  if (!RTC.begin()) Serial.println("Couldn't find RTC");
-
-  //RTC testing only
-    //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //just used once to init the RTC 
-      //OR
-    //RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC setting via NTP remove in production code
-  //RTC testing 
-
-  setSyncInterval(RTC_SYSTIM_SYNC_INTERVAL);
-  setSyncProvider(getRTC);  //set RTC as time provider
-  if(timeStatus()!= timeSet) 
-     Serial.println("Unable to sync with the RTC");
-  else
-     Serial.println("RTC has set the system time");
-
-  //Just for testing 
-    Serial.print(hour());Serial.print(":");
-    Serial.print(minute());Serial.print(":");
-    Serial.print(second());
-    Serial.print(" ");
-    Serial.print(day());
-    Serial.print(" ");
-    Serial.print(month());
-    Serial.print(" ");
-    Serial.print(year()); 
-    Serial.println(); 
-
   //**** Initialize digits
   // I/O pin setup 
   pinMode(TFT_CS_Digit_0, OUTPUT); 
@@ -230,6 +163,157 @@ void setup()
   digitalWrite(TFT_CS_Digit_3, HIGH);
   digitalWrite(TFT_CS_Digit_4, HIGH);
   digitalWrite(TFT_CS_Digit_5, HIGH);
+
+
+  return true;
+}
+
+//====================================================================================
+//                                    Time Stuff
+//====================================================================================
+RTC_DS3231 RTC;
+
+uint32_t lastRTC_NTPSync = 0;
+#define RTC_NTP_SYNC_INTERVAL 6 * 3600  //sync RTC from NTP every 6h
+#define RTC_SYSTIM_SYNC_INTERVAL time_t(5)  //after how many seconds the system time is synced with the RTC time
+
+time_t getRTC()
+{
+  return RTC.now().unixtime();
+}
+
+//Check if RTC shoudl be synced with NTP
+bool RTC_NTPSyncNeeded()
+{
+  if((RTC.now().unixtime() - lastRTC_NTPSync) > RTC_NTP_SYNC_INTERVAL) return true;
+  return false;
+}
+
+//Sync the RTC time wiht the NTP time if needed
+void SyncRTC_NTP(void)
+{
+  //sync RTC ... only if it's time to do this or RTC lost power ... and only if there is WiFi
+  if ((RTC_NTPSyncNeeded() || RTC.lostPower()) && ClockConfig.WiFiConnected)
+  {
+    Serial.print("Adjust RTC with ");
+    RTC.adjust(DateTime(GetNTPTime()));
+    lastRTC_NTPSync = RTC.now().unixtime();
+  }
+}
+
+bool RTCInit()
+{
+  if (!RTC.begin())
+  {
+      Serial.println("Couldn't find RTC");
+      //TBD use NTP as time source
+  }
+  else
+  {
+    //RTC testing only
+      //RTC.adjust(DateTime(F(__DATE__), F(__TIME__))); //just used once to init the RTC 
+        //OR
+      //RTC.adjust(DateTime(F(__DATE__), F("00:00:00"))); //testing RTC setting via NTP remove in production code
+    //RTC testing 
+
+    setSyncInterval(RTC_SYSTIM_SYNC_INTERVAL);
+    setSyncProvider(getRTC);  //set RTC as time provider
+    if(timeStatus()!= timeSet) 
+      Serial.println("Unable to sync with the RTC");
+    else
+      Serial.println("RTC has set the system time");
+  }
+
+  //Just for testing 
+  Serial.print(hour());Serial.print(":");
+  Serial.print(minute());Serial.print(":");
+  Serial.print(second());
+  Serial.print(" ");
+  Serial.print(day());
+  Serial.print(" ");
+  Serial.print(month());
+  Serial.print(" ");
+  Serial.print(year()); 
+  Serial.println(); 
+
+  return true;
+}
+
+//====================================================================================
+//                                    OTA Stuff
+//====================================================================================
+
+bool OTAInit()
+{
+
+  // Hostname defaults to esp3232-[MAC]
+  ArduinoOTA.setHostname(DEVICE_NAME);
+
+  // No authentication by default
+  // ArduinoOTA.setPassword("admin");
+
+  // Password can be set with it's md5 value as well
+  // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
+  // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+
+  ArduinoOTA
+    .onStart([]() 
+    {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    
+    .onEnd([]() 
+    {
+      Serial.println("\nEnd");
+    })
+    
+    .onProgress([](unsigned int progress, unsigned int total) 
+    {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    
+    .onError([](ota_error_t error) 
+    {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
+
+  return true;
+}
+
+//====================================================================================
+//                                    Setup
+//====================================================================================
+void setup()
+{
+  Serial.begin(115200); 
+  Serial.println("tNixi Clock Project");
+
+  if (!SPIFFS.begin()) {
+      Serial.println("SPIFFS initialisation failed!");
+      while (1) yield(); 
+  }
+  Serial.println("SPIFFS Initialized");
+  listFiles(); // Lists all files that ara availabel in the SPIFFS
+
+  //Initializ time source
+  RTCInit();
+
+  //Initialize displays
+  TFTsInit();
 
   //prep clock configurations
   ClockConfig.ActiveTFT = &tft_ActiveCS;
@@ -305,6 +389,8 @@ void setup()
   //WiFi Setup - we will not wait here for WiFi to connect
   WiFiInit(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
 
+  OTAInit();  //Initializ over the air update
+
   bootTime = now();
 }
 
@@ -350,6 +436,9 @@ void loop()
   Tube3.Refresh();
   //Tube4.Refresh();
   //Tube5.Refresh();
+
+  //**** finaly doing the OTA stuff
+  ArduinoOTA.handle();
   
 }
 //====================================================================================

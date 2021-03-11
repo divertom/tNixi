@@ -2,18 +2,10 @@
     #define _TNIXI_DIGIT_H_
 
     #include <Arduino.h>
+    #include "tNixi.h"
     #include <TFT_eSPI.h>
     #include <string>
 
-#define FW_VERSION String(__DATE__) + String(" ") + String(__TIME__)
-
-#define LED_ORIENTATION 2 // 0 & 2 Portrait. 1 & 3 landscape
-
-#define TNIXI_TIME_FORMAT_24  0 //24 hour time display
-#define TNIXI_TIME_FORMAT_12  1 //12 hour time display
-
-#define TNIXI_DATE_FORMAT_US    0 //US date format MM/DD/YYYY
-#define TNIXI_DATE_FORMAT_WORLD 1 //I guess, the rest of the world uses DD/MM/YYYY
 
 //**** define digit modes 
 #define TNIXI_MODE_BOOT         0
@@ -51,25 +43,6 @@
 #define CCS_SIZE    4   //Crupto Currency Symbol Size
 
 #define IS_DIGIT_INITIALIZED    if(!DigitIsIntitialized) return false;
-
-//Structure contains all variabls and settings that are common across all digit TFTs
-struct tNixi_Clock_Config
-{
-    //TFT configuration
-    int *ActiveTFT;
-    TFT_eSPI *TFT;
-
-    //
-    int TimeFormat = TNIXI_TIME_FORMAT_24;
-    int DateFormat = TNIXI_DATE_FORMAT_US;
-    String WiFiSSID ="";    // some screen will show the current SSID
-    String WiFiPassword = ""; 
-    String IPAddress = "";  
-    bool WiFiConnected = false;
-    time_t CurrentTime;     // snapshot of the time that wil be displayed. This needs to be refreshed for each new time that is displayed.
-};
-
-extern tNixi_Clock_Config ClockConfig;
 
 class tNixi_Digit; 
 
