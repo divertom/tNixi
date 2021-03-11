@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+String FirmwareVersion(String(__DATE__) + String(" ") + String(__TIME__));
+
 #include "tNixi.h"
 
 #define FS_NO_GLOBALS
@@ -261,26 +263,35 @@ bool OTAInit()
     {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
+        type = "Firmware";
       else // U_SPIFFS
-        type = "filesystem";
+      {
+        type = "Data";
+        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+        //SPIFFS.end(); // need to deal with this whiel showing the clock - need to stop reading data form SPIFFS
+      }
 
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      ClockConfig.OTAActive = false;
+      ClockConfig.OTAComamand = type;  
       Serial.println("Start updating " + type);
     })
     
     .onEnd([]() 
     {
+      ClockConfig.OTAActive = false;
       Serial.println("\nEnd");
     })
     
     .onProgress([](unsigned int progress, unsigned int total) 
     {
+      ClockConfig.OTAPprogress = progress;
+      ClockConfig.OTATotal = total;
       Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
     })
     
     .onError([](ota_error_t error) 
     {
+      ClockConfig.OTAError = error;
       Serial.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
       else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");

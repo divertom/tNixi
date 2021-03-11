@@ -4,7 +4,9 @@
 #include <TFT_eSPI.h>   
 #include <ArduinoOTA.h>
 
-#define FW_VERSION String(__DATE__) + String(" ") + String(__TIME__)
+extern String FirmwareVersion;
+
+#define FW_VERSION FirmwareVersion
 #define DEVICE_NAME "Tom_Nixi_Clock"
 
 #define LED_ORIENTATION 2 // 0 & 2 Portrait. 1 & 3 landscape
