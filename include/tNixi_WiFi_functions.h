@@ -7,7 +7,9 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <Timezone.h>    // https://github.com/JChristensen/Timezone
 
+extern Timezone myTZ;
 
 unsigned long GetNTPTime();
 void WiFiInit(String SSID, String Password);

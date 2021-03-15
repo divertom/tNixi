@@ -45,6 +45,11 @@ tNixi_Digit::tNixi_Digit()
 
 }
 
+
+//***************************************************************
+//****** Digit functions ****************************************
+//***************************************************************
+
 //Initializing digit wiht defiend mode, e.g. hour_10
 bool tNixi_Digit::Init(tNixi_Clock_Config *xNixiClockConfig, int xDigitMode)
 {
@@ -168,23 +173,29 @@ void tNixi_Digit::ShowScreen_Boot()
     int padding = NixiClockConfig->TFT->textWidth("                    ", 2); // get the width of the text in pixels;
     NixiClockConfig->TFT->setTextPadding(padding);
 
-    NixiClockConfig->TFT->println(DEVICE_NAME);
-    NixiClockConfig->TFT->println(FW_VERSION);
+    //show device name and FW version
+        NixiClockConfig->TFT->println(DEVICE_NAME);
+        NixiClockConfig->TFT->println(FW_VERSION);
 
-    NixiClockConfig->TFT->print("SSID: "); NixiClockConfig->TFT->println(NixiClockConfig->WiFiSSID);
-    NixiClockConfig->TFT->print("IP: ");NixiClockConfig->TFT->println(NixiClockConfig->IPAddress);
+    //show network configuration
+        NixiClockConfig->TFT->print("SSID: "); NixiClockConfig->TFT->println(NixiClockConfig->WiFiSSID);
+        NixiClockConfig->TFT->print("IP: ");NixiClockConfig->TFT->println(NixiClockConfig->IPAddress);
 
-    char TimeDateStr[20];
-    DateTime CurrentTime = NixiClockConfig->CurrentTime;
-    sprintf(TimeDateStr, "%02d:%02d:%02d %02d/%02d/%02d",   CurrentTime.hour(), 
-                                                            CurrentTime.minute(), 
-                                                            CurrentTime.second(), 
-                                                            CurrentTime.day(), 
-                                                            CurrentTime.month(), 
-                                                            CurrentTime.year());
+    //show system time, time zone and date
+        char TimeDateStr[20];
+        DateTime CurrentTime = NixiClockConfig->CurrentTime;
 
-    NixiClockConfig->TFT->println(TimeDateStr);
-}
+        sprintf(TimeDateStr, "%02d:%02d:%02d %s",   CurrentTime.hour(), 
+                                                    CurrentTime.minute(), 
+                                                    CurrentTime.second(), 
+                                                    NixiClockConfig->TimeZone.c_str());
+        NixiClockConfig->TFT->println(TimeDateStr);
+        
+        sprintf(TimeDateStr, "%02d/%02d/%02d",   
+                                            CurrentTime.day(), 
+                                            CurrentTime.month(), 
+                                            CurrentTime.year());
+        NixiClockConfig->TFT->println(TimeDateStr);}
 
 //Show date in numbers only: "12/30" or "30.12"
 void tNixi_Digit::ShowScreen_Date_MM_DD()

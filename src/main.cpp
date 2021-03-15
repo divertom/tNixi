@@ -425,8 +425,10 @@ void loop()
     ClockConfig.WiFiConnected = false;  //set current WiFi conenction status
     ClockConfig.IPAddress = String("0.0.0.0");
   }
-
-  ClockConfig.CurrentTime = now();  //get the current time and date to be displayed
+  
+  TimeChangeRule *TimeRule;        //pointer to the time change rule, use to get TZ abbrev
+  ClockConfig.CurrentTime = myTZ.toLocal(now(), &TimeRule);  //adjust for time zone and daylight savings time
+  ClockConfig.TimeZone = TimeRule->abbrev;
 
   //************ Set what every tube should show **************
   if (showBootbootTimeScreen)
