@@ -224,6 +224,8 @@ bool RTCInit()
       Serial.println("Unable to sync with the RTC");
     else
       Serial.println("RTC has set the system time");
+
+      ClockConfig.RTCPowerStatus = RTC.lostPower();
   }
 
   //Just for testing 
@@ -438,6 +440,8 @@ void loop()
         //Tube0.SetDigit(&DigitSec1); //replace boot screen with second digit 1 display
         Tube0.SetDigit(&DigitMin1); //replace boot screen with second digit 1 display
         showBootbootTimeScreen = false;
+
+        Serial.println(now());
     }
   }
 

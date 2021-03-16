@@ -19,8 +19,6 @@ static const char ntpServerName[] = "us.pool.ntp.org";
     #define TZ_PST  -8  // Pacific Standard Time (USA)
     #define TZ_PDT  -7  // Pacific Daylight Time (USA)
 
-    const int timeZone = TZ_PST;  //TBD make this a variable and configurable
-
 //Define daylight savings time rules
 
     // US Eastern Time Zone (New York, Detroit)

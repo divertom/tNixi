@@ -182,10 +182,20 @@ void tNixi_Digit::ShowScreen_Boot()
         NixiClockConfig->TFT->print("IP: ");NixiClockConfig->TFT->println(NixiClockConfig->IPAddress);
 
     //show system time, time zone and date
+        if (ClockConfig.RTCPowerStatus) NixiClockConfig->TFT->println("RTC lost power");
+        
         char TimeDateStr[20];
+        sprintf(TimeDateStr, "%s %02d:%02d:%02d",   "RTC",
+                                                    hour(), 
+                                                    minute(), 
+                                                    second());
+        NixiClockConfig->TFT->println(TimeDateStr);    
+        
+        
         DateTime CurrentTime = NixiClockConfig->CurrentTime;
 
-        sprintf(TimeDateStr, "%02d:%02d:%02d %s",   CurrentTime.hour(), 
+        sprintf(TimeDateStr, "%s %02d:%02d:%02d %s",   "Local",
+                                                    CurrentTime.hour(), 
                                                     CurrentTime.minute(), 
                                                     CurrentTime.second(), 
                                                     NixiClockConfig->TimeZone.c_str());

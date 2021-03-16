@@ -29,6 +29,7 @@ struct tNixi_Clock_Config
     int DateFormat = TNIXI_DATE_FORMAT_US;
     time_t CurrentTime;     // snapshot of the time that wil be displayed. This needs to be refreshed for each new time that is displayed.
     String TimeZone;
+    bool RTCPowerStatus;
     
     //WiFi 
     String WiFiSSID ="";    // some screen will show the current SSID
