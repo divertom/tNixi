@@ -440,8 +440,6 @@ void loop()
         //Tube0.SetDigit(&DigitSec1); //replace boot screen with second digit 1 display
         Tube0.SetDigit(&DigitMin1); //replace boot screen with second digit 1 display
         showBootbootTimeScreen = false;
-
-        Serial.println(now());
     }
   }
 
