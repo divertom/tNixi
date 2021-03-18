@@ -176,7 +176,7 @@ bool TFTsInit()
 RTC_DS3231 RTC;
 
 uint32_t lastRTC_NTPSync = 0;
-#define RTC_NTP_SYNC_INTERVAL 6 * 3600  //sync RTC from NTP every 6h
+#define RTC_NTP_SYNC_INTERVAL 10 * 60  //sync RTC from NTP every 10 min
 #define RTC_SYSTIM_SYNC_INTERVAL time_t(5)  //after how many seconds the system time is synced with the RTC time
 
 time_t getRTC()
