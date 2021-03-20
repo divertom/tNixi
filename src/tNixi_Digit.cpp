@@ -17,14 +17,13 @@ tNixi_Tube::tNixi_Tube()
 
 }
 
-void tNixi_Tube::Init(int xThisDigitCS, tNixi_Clock_Config *xNixiClockConfig)
+void tNixi_Tube::Init(int xThisDigitCS)
 {
     ChipSelect = xThisDigitCS;
-    ClockConfig = xNixiClockConfig;
-
-    *(ClockConfig->ActiveTFT) = ChipSelect;  //set this digit as the active TFT
-    ClockConfig->TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
-    ClockConfig->TFT->fillScreen(TFT_BLACK);
+    
+    *(gClockConfig.ActiveTFT) = ChipSelect;  //set this digit as the active TFT
+     gClockConfig.TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
+     gClockConfig.TFT->fillScreen(TFT_BLACK);
 }
 
 void tNixi_Tube::SetDigit(tNixi_Digit *Digit)
@@ -34,10 +33,14 @@ void tNixi_Tube::SetDigit(tNixi_Digit *Digit)
 
 void tNixi_Tube::Refresh()
 {
-    *(ClockConfig->ActiveTFT) = ChipSelect;  //set this digit as the active TFT
+    *(gClockConfig.ActiveTFT) = ChipSelect;  //set this digit as the active TFT
     currentDigit->Refresh();
 }
 
+
+//***************************************************************
+//****** Digit functions ****************************************
+//***************************************************************
 
 //Initializing digit without defined  mode
 tNixi_Digit::tNixi_Digit()
@@ -46,190 +49,36 @@ tNixi_Digit::tNixi_Digit()
 }
 
 
-//***************************************************************
-//****** Digit functions ****************************************
-//***************************************************************
-
-//Initializing digit wiht defiend mode, e.g. hour_10
-bool tNixi_Digit::Init(tNixi_Clock_Config *xNixiClockConfig, int xDigitMode)
-{
-    NixiClockConfig = xNixiClockConfig;
-    DigitMode = xDigitMode;     //Set what this digit will show 
-    DigitData.TimeDigit = -1;   //just setting some number that will not be show
-
-    //Initialize TFT display --- old code remove 
-    //*(NixiClockConfig->ActiveTFT) = DigitCS;  //set this digit as the active TFT
-    //NixiClockConfig->TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
-    //NixiClockConfig->TFT->fillScreen(TFT_BLACK);
-
-    DigitIsIntitialized = true;
-    
-    //Serial.print("TFT Initialized "); Serial.println(*(NixiClockConfig->ActiveTFT));   
-    return true;
-}
-
-bool tNixi_Digit::InitGraphicMode(String xNixiPictureFileName)
+bool tNixi_Digit_Time::InitGraphicMode(String xNixiPictureFileName)
 {
     NixiPictureFileName = xNixiPictureFileName;
     return true;
 }
 
-bool tNixi_Digit::InitTextMode(uint8_t xTextFont, uint32_t xTextColor)
+bool tNixi_Digit_Time::InitTextMode(uint8_t xTextFont, uint32_t xTextColor)
 {
     TextFont = xTextFont;
     TextColor = xTextColor;
     return true;
 }
 
-bool tNixi_Digit::TextMode(void)
+bool tNixi_Digit_Time::TextMode(void)
 {
     DisplayMode = TNIXI_DISPLAY_MODE_TEXT;
     return true;
 }
 
-bool tNixi_Digit::GraphicMode(void)
+bool tNixi_Digit_Time::GraphicMode(void)
 {
     if(NixiPictureFileName.isEmpty()) return false;
     DisplayMode = TNIXI_DISPLAY_MODE_GRAPHIC;
     return true;
 }
 
-bool tNixi_Digit::SetDigitMode(int xDigitMode)
-{
-    switch (DigitMode)
-    {
-        case TNIXI_MODE_BOOT:
-        case TNIXI_MODE_HOUR_10: 
-        case TNIXI_MODE_HOUR_1: 
-        case TNIXI_MODE_MINUTE_10: 
-        case TNIXI_MODE_MINUTE_1: 
-        case TNIXI_MODE_SECOND_10: 
-        case TNIXI_MODE_SECOND_1: 
-        case TNIXI_MODE_DATE_MM_DD: 
-        case TNIXI_MODE_DATE_MMMM_DD:
-        case TNIXI_MODE_DATE_MMMM_DDDD: 
-        case TNIXI_MODE_WEATHER_NOW: 
-        case TNIXI_MODE_WEATHER_TODAY:
-        case TNIXI_MODE_WEATHER_3DAY: 
-        case TNIXI_MODE_STOCK:
-        case TNIXI_MODE_CRYPTO_CURRENCY:
-            DigitMode = xDigitMode;
-            DoDisplayRefresh = true;    //refresh the display next time the Refresh function is called
-        default:
-            return false;   //unsupported mode 
-        
-    }
-    return false;
-}
-
 //Refresh the display depdenign on the current display configuration 
 bool tNixi_Digit::Refresh(bool xForce)
 {
-    IS_DIGIT_INITIALIZED
-    
-    //*(NixiClockConfig->ActiveTFT) = DigitCS;  //set this digit as the active TFT
-    //Serial.print("Active Display: "); Serial.println(*(NixiClockConfig->ActiveTFT));
-        
-    switch (DigitMode)
-    {
-       
-        //time number displays    
-        case TNIXI_MODE_HOUR_10: DrawNumber(GetTimeDigit(5)); break;
-        case TNIXI_MODE_HOUR_1: DrawNumber(GetTimeDigit(4)); break;
-        case TNIXI_MODE_MINUTE_10: DrawNumber(GetTimeDigit(3)); break;
-        case TNIXI_MODE_MINUTE_1: DrawNumber(GetTimeDigit(2)); break;
-        case TNIXI_MODE_SECOND_10: DrawNumber(GetTimeDigit(1)); break;
-        case TNIXI_MODE_SECOND_1: DrawNumber(GetTimeDigit(0)); break;
-
-        //date displays
-        case TNIXI_MODE_DATE_MM_DD: ShowScreen_Date_MM_DD(); break;
-        case TNIXI_MODE_DATE_MMMM_DD:
-        case TNIXI_MODE_DATE_MMMM_DDDD: ShowScreen_Date_MMMM_DDDD(); break;
-
-        //weather displays
-        case TNIXI_MODE_WEATHER_NOW: 
-        case TNIXI_MODE_WEATHER_TODAY:
-        case TNIXI_MODE_WEATHER_3DAY: ShowScreen_Weather_Now(); break;
-
-        //other displays, e.g. stocks, new messages, ...
-        case TNIXI_MODE_STOCK:
-        case TNIXI_MODE_CRYPTO_CURRENCY:
-
-        
-        default:
-            ShowScreen_Boot();
-        
-    }
     return true;
-}
-
-//Show digit and clock configuration
-void tNixi_Digit::ShowScreen_Boot()
-{
-    NixiClockConfig->TFT->setCursor(0, 0);
-    NixiClockConfig->TFT->setTextColor(TFT_WHITE, TFT_BLACK);    
-    NixiClockConfig->TFT->setTextDatum(TR_DATUM);
-    NixiClockConfig->TFT->setTextSize(2);
-    int padding = NixiClockConfig->TFT->textWidth("                    ", 2); // get the width of the text in pixels;
-    NixiClockConfig->TFT->setTextPadding(padding);
-
-    //show device name and FW version
-        NixiClockConfig->TFT->println(DEVICE_NAME);
-        NixiClockConfig->TFT->println(FW_VERSION);
-
-    //show network configuration
-        NixiClockConfig->TFT->print("SSID: "); NixiClockConfig->TFT->println(NixiClockConfig->WiFiSSID);
-        NixiClockConfig->TFT->print("IP: ");NixiClockConfig->TFT->println(NixiClockConfig->IPAddress);
-
-    //show system time, time zone and date
-        if (ClockConfig.RTCPowerStatus) NixiClockConfig->TFT->println("RTC lost power");
-        
-        char TimeDateStr[20];
-        sprintf(TimeDateStr, "%s %02d:%02d:%02d",   "RTC",
-                                                    hour(), 
-                                                    minute(), 
-                                                    second());
-        NixiClockConfig->TFT->println(TimeDateStr);    
-        
-        
-        DateTime CurrentTime = NixiClockConfig->CurrentTime;
-
-        sprintf(TimeDateStr, "%s %02d:%02d:%02d %s",   "Local",
-                                                    CurrentTime.hour(), 
-                                                    CurrentTime.minute(), 
-                                                    CurrentTime.second(), 
-                                                    NixiClockConfig->TimeZone.c_str());
-        NixiClockConfig->TFT->println(TimeDateStr);
-        
-        sprintf(TimeDateStr, "%02d/%02d/%02d",   
-                                            CurrentTime.day(), 
-                                            CurrentTime.month(), 
-                                            CurrentTime.year());
-        NixiClockConfig->TFT->println(TimeDateStr);}
-
-//Show date in numbers only: "12/30" or "30.12"
-void tNixi_Digit::ShowScreen_Date_MM_DD()
-{
-
-}
-
-//Show date wiht Month short name: "Dec 30"
-void tNixi_Digit::ShowScreen_Date_MMMM_DD()
-{
-
-}
-
-//Show date with Month short name and day of week name: " Monday Dec 30"
-void tNixi_Digit::ShowScreen_Date_MMMM_DDDD()
-{
-
-}
-
-
-//Show Weather data 
-void tNixi_Digit::ShowScreen_Weather_Now()
-{
-
 }
 
 
@@ -239,18 +88,15 @@ void tNixi_Digit::ShowScreen_Weather_Now()
 //*****************************************************************
 
 //Display the single number on the screen depeding on the current display mode
-void tNixi_Digit::DrawNumber(int Number)
+void tNixi_Digit_Time::DrawNumber(int Number)
 {
-      
     if (DisplayMode == TNIXI_DISPLAY_MODE_GRAPHIC) 
     {
-        //Serial.print("DrawNumberPicture "); Serial.println(Number);
         DrawNumberPicture(Number);
         return;
     } 
     if (DisplayMode == TNIXI_DISPLAY_MODE_TEXT) 
     {
-        //Serial.println("DrawNumberText "); Serial.println(Number);
         DrawNumberText(Number);
         return;
     }
@@ -260,28 +106,28 @@ void tNixi_Digit::DrawNumber(int Number)
 }
 
 //Draw the digit number as bitmap. Used for single diget on display.
-void tNixi_Digit::DrawNumberPicture(int Number)
+void tNixi_Digit_Time::DrawNumberPicture(int Number)
 {
     //check if the number is different then before. Drawing stuff takes a lot of time so we try to reduce this
-    if (DigitData.TimeDigit != Number)
+    if (CurrentDigitNumber != Number)
     {
         //new number to display
         String FileName = NixiPictureFileName + Number + ".jpg";
         drawJpeg(FileName.c_str(), 0 , 0); 
 
-        DigitData.TimeDigit = Number;   //set new number that was just drawn
+       CurrentDigitNumber = Number;   //set new number that was just drawn
     }
 }
 
 //Draw the digit number as Text. Used for single diget on display.
-void tNixi_Digit::DrawNumberText(int Number)
+void tNixi_Digit_Time::DrawNumberText(int Number)
 {
-    NixiClockConfig->TFT->setTextFont(TextFont);
-    NixiClockConfig->TFT->setCursor(0, 0);
-    NixiClockConfig->TFT->setTextDatum(CC_DATUM); //place number in the middle of the screen
-    NixiClockConfig->TFT->setTextColor(TFT_WHITE);  
-    NixiClockConfig->TFT->setTextSize(5);
-    NixiClockConfig->TFT->println(Number);
+     gClockConfig.TFT->setTextFont(TextFont);
+     gClockConfig.TFT->setCursor(0, 0);
+     gClockConfig.TFT->setTextDatum(CC_DATUM); //place number in the middle of the screen
+     gClockConfig.TFT->setTextColor(TFT_WHITE);  
+     gClockConfig.TFT->setTextSize(5);
+     gClockConfig.TFT->println(Number);
 }
 
 //***********************************************************************************
@@ -292,10 +138,10 @@ void tNixi_Digit::DrawNumberText(int Number)
 // Returns the specified digit in the of the current time wiht the Seconds lowes digit being index 0
 // Digit Index:  14... .. .. . .. .. .0
 // Time:          YYYY MM DD W HH MM SS 
-int tNixi_Digit::GetTimeDigit(int TimeIndex)
+int tNixi_Digit_Time::GetTimeDigit(int TimeIndex)
 {
     TimeElements timeElements;
-    breakTime(NixiClockConfig->CurrentTime,timeElements);
+    breakTime( gClockConfig.CurrentTime,timeElements);
     int DigitValue = 0;
 
     switch (TimeIndex) 
@@ -321,4 +167,90 @@ int tNixi_Digit::GetTimeDigit(int TimeIndex)
     }  
 
     return DigitValue;
+}
+
+bool tNixi_Second_1::Refresh(bool xForce)  
+{
+    DrawNumber(GetTimeDigit(0));
+    return true;
+}
+
+bool tNixi_Second_10::Refresh(bool xForce)  
+{
+    DrawNumber(GetTimeDigit(1));
+    return true;
+}
+
+bool tNixi_Minute_1::Refresh(bool xForce)  
+{
+    DrawNumber(GetTimeDigit(2));
+    return true;
+}
+
+bool tNixi_Minute_10::Refresh(bool xForce) 
+{
+    DrawNumber(GetTimeDigit(3));
+    return true;
+}
+
+bool tNixi_Hour_1::Refresh(bool xForce) 
+{
+    DrawNumber(GetTimeDigit(4));
+    return true;
+}
+
+bool tNixi_Hour_10::Refresh(bool xForce)
+{
+    DrawNumber(GetTimeDigit(5));
+    return true;
+}
+
+
+//***********************************************************************************
+// Boot Screen Class
+//***********************************************************************************
+bool tNixi_Digit_BootScreen::Refresh(bool xForce)
+{
+     gClockConfig.TFT->setCursor(0, 0);
+     gClockConfig.TFT->setTextColor(TFT_WHITE, TFT_BLACK);    
+     gClockConfig.TFT->setTextDatum(TR_DATUM);
+     gClockConfig.TFT->setTextSize(2);
+    int padding =  gClockConfig.TFT->textWidth("                    ", 2); // get the width of the text in pixels;
+     gClockConfig.TFT->setTextPadding(padding);
+
+    //show device name and FW version
+         gClockConfig.TFT->println(DEVICE_NAME);
+         gClockConfig.TFT->println(FW_VERSION);
+
+    //show network configuration
+         gClockConfig.TFT->print("SSID: ");  gClockConfig.TFT->println( gClockConfig.WiFiSSID);
+         gClockConfig.TFT->print("IP: "); gClockConfig.TFT->println( gClockConfig.IPAddress);
+
+    //show system time, time zone and date
+        if ( gClockConfig.RTCPowerStatus)  gClockConfig.TFT->println("RTC lost power");
+        
+        char TimeDateStr[20];
+        sprintf(TimeDateStr, "%s %02d:%02d:%02d",   "RTC",
+                                                    hour(), 
+                                                    minute(), 
+                                                    second());
+         gClockConfig.TFT->println(TimeDateStr);    
+        
+        
+        DateTime CurrentTime =  gClockConfig.CurrentTime;
+
+        sprintf(TimeDateStr, "%s %02d:%02d:%02d %s",   "Local",
+                                                    CurrentTime.hour(), 
+                                                    CurrentTime.minute(), 
+                                                    CurrentTime.second(), 
+                                                     gClockConfig.TimeZone.c_str());
+         gClockConfig.TFT->println(TimeDateStr);
+        
+        sprintf(TimeDateStr, "%02d/%02d/%02d",   
+                                            CurrentTime.day(), 
+                                            CurrentTime.month(), 
+                                            CurrentTime.year());
+         gClockConfig.TFT->println(TimeDateStr);
+        
+        return true;
 }

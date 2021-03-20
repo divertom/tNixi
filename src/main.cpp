@@ -114,7 +114,7 @@ void blSetBrightness(void)
 //====================================================================================
 //                                    Global Variables
 //====================================================================================
-tNixi_Clock_Config ClockConfig;
+tNixi_Clock_Config gClockConfig;
 long bootTime = 0;
 bool showBootbootTimeScreen = true;
 
@@ -126,13 +126,14 @@ tNixi_Tube Tube3;
 tNixi_Tube Tube4;
 tNixi_Tube Tube5;
 
-tNixi_Digit DigitSec1;
-tNixi_Digit DigitSec10;
-tNixi_Digit DigitMin1;
-tNixi_Digit DigitMin10;
-tNixi_Digit DigitHour1;
-tNixi_Digit DigitHour10;
-tNixi_Digit DigitBoot;
+tNixi_Second_1 DigitSec1;
+tNixi_Second_10 DigitSec10;
+tNixi_Minute_1 DigitMin1;
+tNixi_Minute_10 DigitMin10;
+tNixi_Hour_1 DigitHour1;
+tNixi_Hour_10 DigitHour10;
+
+tNixi_Digit_BootScreen DigitBoot;   //boot screen display
 
 //====================================================================================
 //                                    Display Stuff
@@ -166,7 +167,6 @@ bool TFTsInit()
   digitalWrite(TFT_CS_Digit_4, HIGH);
   digitalWrite(TFT_CS_Digit_5, HIGH);
 
-
   return true;
 }
 
@@ -195,7 +195,7 @@ bool RTC_NTPSyncNeeded()
 void SyncRTC_NTP(void)
 {
   //sync RTC ... only if it's time to do this or RTC lost power ... and only if there is WiFi
-  if ((RTC_NTPSyncNeeded() || RTC.lostPower()) && ClockConfig.WiFiConnected)
+  if ((RTC_NTPSyncNeeded() || RTC.lostPower()) &&  gClockConfig.WiFiConnected)
   {
     Serial.print("Adjust RTC with ");
     RTC.adjust(DateTime(GetNTPTime()));
@@ -225,7 +225,7 @@ bool RTCInit()
     else
       Serial.println("RTC has set the system time");
 
-      ClockConfig.RTCPowerStatus = RTC.lostPower();
+      gClockConfig.RTCPowerStatus = RTC.lostPower();
   }
 
   //Just for testing 
@@ -273,27 +273,27 @@ bool OTAInit()
         //SPIFFS.end(); // need to deal with this whiel showing the clock - need to stop reading data form SPIFFS
       }
 
-      ClockConfig.OTAActive = false;
-      ClockConfig.OTAComamand = type;  
+      gClockConfig.OTAActive = false;
+      gClockConfig.OTAComamand = type;  
       Serial.println("Start updating " + type);
     })
     
     .onEnd([]() 
     {
-      ClockConfig.OTAActive = false;
+      gClockConfig.OTAActive = false;
       Serial.println("\nEnd");
     })
     
     .onProgress([](unsigned int progress, unsigned int total) 
     {
-      ClockConfig.OTAPprogress = progress;
-      ClockConfig.OTATotal = total;
+       gClockConfig.OTAPprogress = progress;
+       gClockConfig.OTATotal = total;
       Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
     })
     
     .onError([](ota_error_t error) 
     {
-      ClockConfig.OTAError = error;
+       gClockConfig.OTAError = error;
       Serial.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
       else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
@@ -329,62 +329,45 @@ void setup()
   TFTsInit();
 
   //prep clock configurations
-  ClockConfig.ActiveTFT = &tft_ActiveCS;
-  ClockConfig.TFT = &tft;
-  ClockConfig.TimeFormat = TNIXI_TIME_FORMAT_24;
-  ClockConfig.DateFormat = TNIXI_DATE_FORMAT_WORLD;
-  ClockConfig.WiFiSSID = WIFI_SSID; //SSID come from GlobalSettings_privat.h
-  ClockConfig.WiFiPassword = WIFI_PASSWORD; //WiFI Password comes from GlobalSettings_privat.h
+   gClockConfig.ActiveTFT = &tft_ActiveCS;
+   gClockConfig.TFT = &tft;
+   gClockConfig.TimeFormat = TNIXI_TIME_FORMAT_24;
+   gClockConfig.DateFormat = TNIXI_DATE_FORMAT_WORLD;
+   gClockConfig.WiFiSSID = WIFI_SSID; //SSID come from GlobalSettings_privat.h
+   gClockConfig.WiFiPassword = WIFI_PASSWORD; //WiFI Password comes from GlobalSettings_privat.h
 
   //init Tubes
-  Tube0.Init(TFT_CS_Digit_0, &ClockConfig);
-  Tube1.Init(TFT_CS_Digit_1, &ClockConfig);
-  Tube2.Init(TFT_CS_Digit_2, &ClockConfig);
-  Tube3.Init(TFT_CS_Digit_3, &ClockConfig);
-  Tube4.Init(TFT_CS_Digit_4, &ClockConfig);
-  Tube5.Init(TFT_CS_Digit_5, &ClockConfig);
+  Tube0.Init(TFT_CS_Digit_0);
+  Tube1.Init(TFT_CS_Digit_1);
+  Tube2.Init(TFT_CS_Digit_2);
+  Tube3.Init(TFT_CS_Digit_3);
+  Tube4.Init(TFT_CS_Digit_4);
+  Tube5.Init(TFT_CS_Digit_5);
 
 
   //create digits 
-  DigitSec1.Init(&ClockConfig,TNIXI_MODE_SECOND_1);
   DigitSec1.InitGraphicMode(NIXI_TYPE);
   DigitSec1.GraphicMode();
 
-  DigitSec10.Init(&ClockConfig,TNIXI_MODE_SECOND_10);
   DigitSec10.InitGraphicMode(NIXI_TYPE);
   DigitSec10.GraphicMode();
 
-  DigitMin1.Init(&ClockConfig,TNIXI_MODE_MINUTE_1);
   DigitMin1.InitGraphicMode(NIXI_TYPE);
   DigitMin1.GraphicMode();
 
-  DigitMin10.Init(&ClockConfig,TNIXI_MODE_MINUTE_10);
   DigitMin10.InitGraphicMode(NIXI_TYPE);
   DigitMin10.GraphicMode();
 
-  DigitHour1.Init(&ClockConfig,TNIXI_MODE_HOUR_1);
   DigitHour1.InitGraphicMode(NIXI_TYPE);
   DigitHour1.GraphicMode();
 
-  DigitHour10.Init(&ClockConfig,TNIXI_MODE_HOUR_10);
   DigitHour10.InitGraphicMode(NIXI_TYPE);
   DigitHour10.GraphicMode();
-
-  DigitBoot.Init(&ClockConfig,TNIXI_MODE_BOOT);
-  DigitBoot.InitGraphicMode(NIXI_TYPE);
-  DigitBoot.GraphicMode();
 
   //set inital tube displayes    
   Tube0.SetDigit(&DigitBoot); //start with the boot screen
   showBootbootTimeScreen = true;
 
-/*
-  Tube1.SetDigit(&DigitSec10);
-  Tube2.SetDigit(&DigitMin1);
-  Tube3.SetDigit(&DigitMin10);
-  Tube4.SetDigit(&DigitHour1);
-  Tube5.SetDigit(&DigitHour10);
-*/
 
   //Test
   Tube1.SetDigit(&DigitMin10);
@@ -400,7 +383,7 @@ void setup()
   ledcWrite(TFT_BL_CHANNEL, TFT_BL_INITIAL_LEVEL); // set the brightness of the LED
 
   //WiFi Setup - we will not wait here for WiFi to connect
-  WiFiInit(ClockConfig.WiFiSSID.c_str(), ClockConfig.WiFiPassword.c_str());
+  WiFiInit(gClockConfig.WiFiSSID.c_str(), gClockConfig.WiFiPassword.c_str());
 
   OTAInit();  //Initializ over the air update
 
@@ -419,18 +402,18 @@ void loop()
   //************ Prepare the display data *************************
   if (WiFi.isConnected())
   {
-    ClockConfig.WiFiConnected = true;  //set current WiFi conenction status
-    ClockConfig.IPAddress = WiFi.localIP().toString();
+    gClockConfig.WiFiConnected = true;  //set current WiFi conenction status
+    gClockConfig.IPAddress = WiFi.localIP().toString();
   }
   else 
   {
-    ClockConfig.WiFiConnected = false;  //set current WiFi conenction status
-    ClockConfig.IPAddress = String("0.0.0.0");
+    gClockConfig.WiFiConnected = false;  //set current WiFi conenction status
+    gClockConfig.IPAddress = String("0.0.0.0");
   }
   
   TimeChangeRule *TimeRule;        //pointer to the time change rule, use to get TZ abbrev
-  ClockConfig.CurrentTime = myTZ.toLocal(now(), &TimeRule);  //adjust for time zone and daylight savings time
-  ClockConfig.TimeZone = TimeRule->abbrev;
+  gClockConfig.CurrentTime = myTZ.toLocal(now(), &TimeRule);  //adjust for time zone and daylight savings time
+  gClockConfig.TimeZone = TimeRule->abbrev;
 
   //************ Set what every tube should show **************
   if (showBootbootTimeScreen)

@@ -46,6 +46,6 @@ struct tNixi_Clock_Config
     ota_error_t OTAError;
 };
 
-extern tNixi_Clock_Config ClockConfig;
+extern tNixi_Clock_Config gClockConfig;
 
 #endif
