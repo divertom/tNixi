@@ -21,7 +21,7 @@ String FirmwareVersion(String(__DATE__) + String(" ") + String(__TIME__));
 #include "tNixi_Digit.h"
 #include "tNixi_WiFi_functions.h"
 
-#include "o:\GlobalSettings_privat.h"
+#include "o:\GlobalSettings_privat_WiFi.h"
   /**** GlobalSettings_private.h ******
   #define WIFI_SSID   <your WiFi SSID>
   #define WIFI_PASSWORD <your WiFi password>
@@ -149,6 +149,7 @@ bool TFTsInit()
   pinMode(TFT_CS_Digit_4, OUTPUT); 
   pinMode(TFT_CS_Digit_5, OUTPUT);  
 
+
   //set all CS active (low) to be initialized at the same time
   digitalWrite(TFT_CS_Digit_0, LOW);  
   digitalWrite(TFT_CS_Digit_1, LOW);
@@ -166,6 +167,9 @@ bool TFTsInit()
   digitalWrite(TFT_CS_Digit_3, HIGH);
   digitalWrite(TFT_CS_Digit_4, HIGH);
   digitalWrite(TFT_CS_Digit_5, HIGH);
+
+  delay(200); // some time needed after initializing the displays to prevent displays crashing 
+
 
   return true;
 }
