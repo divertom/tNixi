@@ -62,7 +62,7 @@ int tft_ActiveCS = TFT_CS_Digit_0;
 //====================================================================================
 //                                    Backlight 
 //====================================================================================
-#define BL_PHOTO_PIN 36 //BL photo resistor is on pin 36
+#define BL_PHOTO_PIN 34 //BL photo resistor is on pin 34
 #define BL_INITIAL_BRIGNESS_LEVEL 3 // initial BL level
 
 //Define backlight hysteresis table 
