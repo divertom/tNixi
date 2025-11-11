@@ -12,8 +12,11 @@ String FirmwareVersion(String(__DATE__) + String(" ") + String(__TIME__));
 #endif
 
 #include <JPEGDecoder.h>
-#include <TFT_eSPI.h>    
+#include <Adafruit_GFX.h>
+#include <Adafruit_ILI9341.h>
+#include <SPI.h>
 #include <RTClib.h>
+#include <TimeLib.h>
 #include <ArduinoOTA.h>
 
 #include "JPEG_functions.h"
@@ -21,11 +24,7 @@ String FirmwareVersion(String(__DATE__) + String(" ") + String(__TIME__));
 #include "tNixi_Digit.h"
 #include "tNixi_WiFi_functions.h"
 
-#include "o:\GlobalSettings_privat_WiFi.h"
-  /**** GlobalSettings_private.h ******
-  #define WIFI_SSID   <your WiFi SSID>
-  #define WIFI_PASSWORD <your WiFi password>
-  */
+#include "GlobalSettings_privat_WiFi.h"
 
 
 //define CS for displays
@@ -45,7 +44,20 @@ String FirmwareVersion(String(__DATE__) + String(" ") + String(__TIME__));
 
 #define BOOT_SCREEN_TIMEOUT 10 //show boot screen for 10s
 
-TFT_eSPI tft = TFT_eSPI(); 
+// TFT pin definitions (common for all displays)
+#define TFT_DC   4   // Data Command control pin
+#define TFT_RST  16  // Reset pin
+#define TFT_MOSI 23  // SPI MOSI
+#define TFT_SCLK 18  // SPI Clock
+#define TFT_MISO 15  // SPI MISO
+
+// Create display objects for each CS pin
+Adafruit_ILI9341 tft0 = Adafruit_ILI9341(TFT_CS_Digit_0, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft1 = Adafruit_ILI9341(TFT_CS_Digit_1, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft2 = Adafruit_ILI9341(TFT_CS_Digit_2, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft3 = Adafruit_ILI9341(TFT_CS_Digit_3, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft4 = Adafruit_ILI9341(TFT_CS_Digit_4, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft5 = Adafruit_ILI9341(TFT_CS_Digit_5, TFT_DC, TFT_RST); 
 
 //TFT backlight settings 
 #define TFT_BL_PIN 27  //TFT backlight LEDs
@@ -138,38 +150,34 @@ tNixi_Digit_BootScreen DigitBoot;   //boot screen display
 //====================================================================================
 //                                    Display Stuff
 //====================================================================================
+// Helper function to get the active display based on CS pin
+Adafruit_ILI9341* getActiveDisplay(int csPin)
+{
+  switch(csPin) {
+    case TFT_CS_Digit_0: return &tft0;
+    case TFT_CS_Digit_1: return &tft1;
+    case TFT_CS_Digit_2: return &tft2;
+    case TFT_CS_Digit_3: return &tft3;
+    case TFT_CS_Digit_4: return &tft4;
+    case TFT_CS_Digit_5: return &tft5;
+    default: return &tft0;
+  }
+}
+
 bool TFTsInit()
 {
-  //**** Initialize digits
-  // I/O pin setup 
-  pinMode(TFT_CS_Digit_0, OUTPUT); 
-  pinMode(TFT_CS_Digit_1, OUTPUT); 
-  pinMode(TFT_CS_Digit_2, OUTPUT); 
-  pinMode(TFT_CS_Digit_3, OUTPUT); 
-  pinMode(TFT_CS_Digit_4, OUTPUT); 
-  pinMode(TFT_CS_Digit_5, OUTPUT);  
+  // Initialize SPI
+  SPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI);
 
-
-  //set all CS active (low) to be initialized at the same time
-  digitalWrite(TFT_CS_Digit_0, LOW);  
-  digitalWrite(TFT_CS_Digit_1, LOW);
-  digitalWrite(TFT_CS_Digit_2, LOW);
-  digitalWrite(TFT_CS_Digit_3, LOW);  
-  digitalWrite(TFT_CS_Digit_4, LOW);
-  digitalWrite(TFT_CS_Digit_5, LOW);
-
-  tft.begin();
-
-  //set all CS inactive (hight) 
-  digitalWrite(TFT_CS_Digit_0, HIGH);
-  digitalWrite(TFT_CS_Digit_1, HIGH);
-  digitalWrite(TFT_CS_Digit_2, HIGH);
-  digitalWrite(TFT_CS_Digit_3, HIGH);
-  digitalWrite(TFT_CS_Digit_4, HIGH);
-  digitalWrite(TFT_CS_Digit_5, HIGH);
+  // Initialize each display
+  tft0.begin();
+  tft1.begin();
+  tft2.begin();
+  tft3.begin();
+  tft4.begin();
+  tft5.begin();
 
   delay(200); // some time needed after initializing the displays to prevent displays crashing 
-
 
   return true;
 }
@@ -334,7 +342,7 @@ void setup()
 
   //prep clock configurations
    gClockConfig.ActiveTFT = &tft_ActiveCS;
-   gClockConfig.TFT = &tft;
+   gClockConfig.TFT = getActiveDisplay(tft_ActiveCS);
    gClockConfig.TimeFormat = TNIXI_TIME_FORMAT_24;
    gClockConfig.DateFormat = TNIXI_DATE_FORMAT_WORLD;
    gClockConfig.WiFiSSID = WIFI_SSID; //SSID come from GlobalSettings_privat.h

@@ -42,13 +42,13 @@ static const char ntpServerName[] = "us.pool.ntp.org";
     WiFiUDP ntpUDP;
     NTPClient timeClient(ntpUDP, ntpServerName, TimeOffsetGMT, NTP_UPDATE_INTERVAL);
 
-static void onWiFiEvent_GotIP(WiFiEvent_t event)
+static void onWiFiEvent_GotIP(arduino_event_id_t event, arduino_event_info_t info)
 {
     Serial.print("Connected to "); Serial.print(WiFi.SSID()); Serial.print(" with IP address: "); Serial.println(WiFi.localIP()); 
     timeClient.begin(); //start NTP client
 }
 
-static void onWiFiEvent_Disconnected(WiFiEvent_t event)
+static void onWiFiEvent_Disconnected(arduino_event_id_t event, arduino_event_info_t info)
 {
     Serial.print("Lost Connected to "); Serial.println(WiFi.SSID());  
     timeClient.end(); //start NTP client
@@ -57,8 +57,8 @@ static void onWiFiEvent_Disconnected(WiFiEvent_t event)
 
 void WiFiInit(String SSID, String Password)
 {
-    WiFi.onEvent(onWiFiEvent_GotIP, SYSTEM_EVENT_STA_GOT_IP);
-    WiFi.onEvent(onWiFiEvent_Disconnected, SYSTEM_EVENT_STA_DISCONNECTED);
+    WiFi.onEvent(onWiFiEvent_GotIP, ARDUINO_EVENT_WIFI_STA_GOT_IP);
+    WiFi.onEvent(onWiFiEvent_Disconnected, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     WiFi.begin(SSID.c_str(), Password.c_str());
 }
 

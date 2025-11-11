@@ -115,14 +115,18 @@ void jpegRender(int xpos, int ypos) {
 
  
 
+    // Use the active display from gClockConfig
+    extern tNixi_Clock_Config gClockConfig;
+    
     // draw image MCU block only if it will fit on the screen
-    if ( mcu_x < tft.width() && mcu_y < tft.height())
+    if ( mcu_x < gClockConfig.TFT->width() && mcu_y < gClockConfig.TFT->height())
     {
-      // Now push the image block to the screen
-      tft.pushImage(mcu_x, mcu_y, win_w, win_h, pImg);
+      // Now push the image block to the screen using drawRGBBitmap
+      // pImg is already in RGB565 format which drawRGBBitmap expects
+      gClockConfig.TFT->drawRGBBitmap(mcu_x, mcu_y, pImg, win_w, win_h);
     }
 
-    else if ( ( mcu_y + win_h) >= tft.height()) JpegDec.abort();
+    else if ( ( mcu_y + win_h) >= gClockConfig.TFT->height()) JpegDec.abort();
 
   }
 

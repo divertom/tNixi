@@ -1,7 +1,9 @@
 #ifndef _TNIXI_H_
     #define _TNIXI_H_
 
-#include <TFT_eSPI.h>   
+#include <Adafruit_GFX.h>
+#include <Adafruit_ILI9341.h>
+#include <SPI.h>
 #include <ArduinoOTA.h>
 
 extern String FirmwareVersion;
@@ -22,7 +24,7 @@ struct tNixi_Clock_Config
 {
     //TFT configuration
     int *ActiveTFT;
-    TFT_eSPI *TFT;
+    Adafruit_ILI9341 *TFT;
 
     //Time and Date
     int TimeFormat = TNIXI_TIME_FORMAT_24;
@@ -47,5 +49,9 @@ struct tNixi_Clock_Config
 };
 
 extern tNixi_Clock_Config gClockConfig;
+
+// Forward declaration for display management
+class Adafruit_ILI9341;
+Adafruit_ILI9341* getActiveDisplay(int csPin);
 
 #endif

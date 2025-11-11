@@ -2,9 +2,9 @@
     #define _JPEG_FUNCTIONS_H_
 
     #include <Arduino.h>
-    #include <TFT_eSPI.h>
-
-    extern TFT_eSPI tft;
+    #include <Adafruit_GFX.h>
+    #include <Adafruit_ILI9341.h>
+    #include "tNixi.h"
 
     // Return the minimum of two values a and b
     #define minimum(a,b)     (((a) < (b)) ? (a) : (b))

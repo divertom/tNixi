@@ -2,10 +2,11 @@
 
 #include <Arduino.h>
 #include <RTClib.h>
-#include <TFT_eSPI.h>
+#include <Adafruit_GFX.h>
 #include <string>
 #include <JPEGDecoder.h>
 #include "JPEG_functions.h"
+#include <TimeLib.h>
 
 
 //***************************************************************
@@ -17,13 +18,15 @@ tNixi_Tube::tNixi_Tube()
 
 }
 
+
 void tNixi_Tube::Init(int xThisDigitCS)
 {
     ChipSelect = xThisDigitCS;
     
     *(gClockConfig.ActiveTFT) = ChipSelect;  //set this digit as the active TFT
-     gClockConfig.TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
-     gClockConfig.TFT->fillScreen(TFT_BLACK);
+    gClockConfig.TFT = getActiveDisplay(ChipSelect);  // Update to point to correct display
+    gClockConfig.TFT->setRotation(LED_ORIENTATION); // assuming that all TFTs have the same orientation
+    gClockConfig.TFT->fillScreen(ILI9341_BLACK);
 }
 
 void tNixi_Tube::SetDigit(tNixi_Digit *Digit)
@@ -34,6 +37,7 @@ void tNixi_Tube::SetDigit(tNixi_Digit *Digit)
 void tNixi_Tube::Refresh()
 {
     *(gClockConfig.ActiveTFT) = ChipSelect;  //set this digit as the active TFT
+    gClockConfig.TFT = getActiveDisplay(ChipSelect);  // Update to point to correct display
     currentDigit->Refresh();
 }
 
@@ -122,12 +126,20 @@ void tNixi_Digit_Time::DrawNumberPicture(int Number)
 //Draw the digit number as Text. Used for single diget on display.
 void tNixi_Digit_Time::DrawNumberText(int Number)
 {
-     gClockConfig.TFT->setTextFont(TextFont);
-     gClockConfig.TFT->setCursor(0, 0);
-     gClockConfig.TFT->setTextDatum(CC_DATUM); //place number in the middle of the screen
-     gClockConfig.TFT->setTextColor(TFT_WHITE);  
-     gClockConfig.TFT->setTextSize(5);
-     gClockConfig.TFT->println(Number);
+    int16_t x1, y1;
+    uint16_t w, h;
+    String numStr = String(Number);
+    
+    gClockConfig.TFT->setTextSize(5);
+    gClockConfig.TFT->setTextColor(ILI9341_WHITE);
+    gClockConfig.TFT->getTextBounds(numStr, 0, 0, &x1, &y1, &w, &h);
+    
+    // Center the text on screen
+    int16_t x = (gClockConfig.TFT->width() - w) / 2;
+    int16_t y = (gClockConfig.TFT->height() - h) / 2;
+    
+    gClockConfig.TFT->setCursor(x, y);
+    gClockConfig.TFT->println(Number);
 }
 
 //***********************************************************************************
@@ -211,12 +223,15 @@ bool tNixi_Hour_10::Refresh(bool xForce)
 //***********************************************************************************
 bool tNixi_Digit_BootScreen::Refresh(bool xForce)
 {
-     gClockConfig.TFT->setCursor(0, 0);
-     gClockConfig.TFT->setTextColor(TFT_WHITE, TFT_BLACK);    
-     gClockConfig.TFT->setTextDatum(TR_DATUM);
-     gClockConfig.TFT->setTextSize(2);
-    int padding =  gClockConfig.TFT->textWidth("                    ", 2); // get the width of the text in pixels;
-     gClockConfig.TFT->setTextPadding(padding);
+    int16_t x1, y1;
+    uint16_t w, h;
+    String paddingStr = "                    ";
+    
+    gClockConfig.TFT->setTextSize(2);
+    gClockConfig.TFT->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+    gClockConfig.TFT->getTextBounds(paddingStr, 0, 0, &x1, &y1, &w, &h);
+    
+    gClockConfig.TFT->setCursor(0, 0);
 
     //show device name and FW version
          gClockConfig.TFT->println(DEVICE_NAME);
@@ -237,19 +252,19 @@ bool tNixi_Digit_BootScreen::Refresh(bool xForce)
          gClockConfig.TFT->println(TimeDateStr);    
         
         
-        DateTime CurrentTime =  gClockConfig.CurrentTime;
+        time_t localTime = gClockConfig.CurrentTime;
 
         sprintf(TimeDateStr, "%s %02d:%02d:%02d %s",   "Local",
-                                                    CurrentTime.hour(), 
-                                                    CurrentTime.minute(), 
-                                                    CurrentTime.second(), 
+                                                    hour(localTime), 
+                                                    minute(localTime), 
+                                                    second(localTime), 
                                                      gClockConfig.TimeZone.c_str());
          gClockConfig.TFT->println(TimeDateStr);
         
         sprintf(TimeDateStr, "%02d/%02d/%02d",   
-                                            CurrentTime.day(), 
-                                            CurrentTime.month(), 
-                                            CurrentTime.year());
+                                            day(localTime), 
+                                            month(localTime), 
+                                            year(localTime));
          gClockConfig.TFT->println(TimeDateStr);
         
         return true;

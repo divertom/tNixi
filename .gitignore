@@ -3,3 +3,6 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# Exclude private WiFi settings (use the template file instead)
+include/GlobalSettings_privat_WiFi.h

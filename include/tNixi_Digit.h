@@ -3,7 +3,7 @@
 
     #include <Arduino.h>
     #include "tNixi.h"
-    #include <TFT_eSPI.h>
+    #include <Adafruit_GFX.h>
     #include <string>
 
 
